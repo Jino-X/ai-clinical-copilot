@@ -1,0 +1,55 @@
+# Local development stack for the backend.
+#
+# The frontend is not containerised: `npm run dev` with Turbopack is faster and
+# is what Vercel builds anyway.
+#
+# `db` is a convenience for offline work. When SUPABASE_URL/DATABASE_URL point
+# at a real Supabase project, run `docker compose up api` alone.
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: clinical_copilot
+    ports:
+      - "54322:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Applied in filename order on first start of an empty volume.
+      - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d clinical_copilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./apps/api
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./apps/api/.env
+    environment:
+      ENVIRONMENT: local
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/clinical_copilot
+      CORS_ALLOW_ORIGINS: http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+    # Source is mounted read-only with reload for a fast local loop. The image
+    # itself contains the code, so production does not depend on this mount.
+    volumes:
+      - ./apps/api/app:/app/app:ro
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --reload
+
+volumes:
+  db-data:

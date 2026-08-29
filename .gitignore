@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+
+# Build output
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Environment / secrets — never commit real values.
+# Patterns are listed explicitly rather than as `.env.*` so the committed
+# `.env.example` templates are never accidentally excluded.
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+*.pem
+*.key
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Local patient data must never be committed
+/tmp-uploads/
+*.wav
+*.mp3
+*.m4a

@@ -1,0 +1,25 @@
+{
+  "name": "clinical-copilot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI Clinical Copilot — multi-tenant clinical documentation assistant",
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace web",
+    "build": "npm run build --workspace web",
+    "start": "npm run start --workspace web",
+    "lint": "npm run lint --workspace web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "api:dev": "cd apps/api && ./scripts/dev.sh",
+    "api:lint": "cd apps/api && .venv/bin/ruff check .",
+    "api:format": "cd apps/api && .venv/bin/ruff format .",
+    "api:typecheck": "cd apps/api && .venv/bin/mypy app",
+    "api:test": "cd apps/api && .venv/bin/pytest"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}

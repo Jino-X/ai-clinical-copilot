@@ -1,0 +1,55 @@
+[project]
+name = "clinical-copilot-api"
+version = "0.1.0"
+description = "AI Clinical Copilot backend — modular monolith"
+requires-python = ">=3.13"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 90
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "ASYNC",# flake8-async
+    "S",    # flake8-bandit
+    "C4",   # comprehensions
+    "SIM",  # simplify
+    "TID",  # tidy imports
+    "RUF",
+]
+ignore = [
+    "B008",  # FastAPI's Depends() in defaults is the documented pattern
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]  # assert is the point of a test
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["structlog.*", "asyncpg.*", "asgi_lifespan.*"]
+follow_untyped_imports = true
+
+# asyncpg ships no type information, so its calls are untyped. The exception is
+# confined to the one module that talks to it directly.
+[[tool.mypy.overrides]]
+module = ["app.db.pool"]
+disallow_untyped_calls = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q"

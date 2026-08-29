@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Web (lint, typecheck, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint --workspace web
+
+      - run: npm run typecheck --workspaces --if-present
+
+      # Placeholders: the build only needs these to be present and well-formed,
+      # and no real credentials belong in CI for a build step.
+      - run: npm run build --workspace web
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+
+  api:
+    name: API (lint, typecheck, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: apps/api/requirements-dev.txt
+
+      - run: pip install -r requirements-dev.txt
+
+      - run: ruff check .
+
+      - run: ruff format --check .
+
+      - run: mypy app tests
+
+      - run: pytest
+
+  docker:
+    name: API image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: apps/api
+          push: false
+          load: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -1,0 +1,15 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Shared patterns (node_modules, build output, env files) live in the root
+# .gitignore. Env patterns are NOT globbed here so `.env.example` stays tracked.
+
+# next.js
+/.next/
+/out/
+/build
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
