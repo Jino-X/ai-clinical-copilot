@@ -6,7 +6,7 @@ organised and how to verify it.
 
 ## Current state
 
-**Phases 1–3 are complete. Phase 4 (Consultation) is next.**
+**Phases 1–4 are complete. Phase 5 (AI Documentation) is next.**
 
 Delivered in Phase 1: monorepo, Next.js app shell, FastAPI service with
 config/logging/error handling/health probes, the initial SQL migration,
@@ -26,7 +26,16 @@ RLS policies for all patient-scoped tables, frontend patient list/search,
 patient detail page with tabbed overview/conditions/medications/allergies/
 timeline, and new-patient form.
 
-Not built yet: consultations, AI providers, RAG, documents.
+Delivered in Phase 4: consultation sessions with state machine (scheduled →
+in_progress → completed/cancelled), patient consent (audio recording and AI
+processing, append-only), Supabase Storage integration for secure audio
+upload via signed URLs, transcript and transcript_segments tables (for Phase
+5), RLS policies for all consultation-scoped tables, audit logging for
+consultation started/completed/cancelled, frontend consultation list, detail
+page with consent recording and browser-based audio recording via
+MediaRecorder API, and "Start consultation" button on patient detail page.
+
+Not built yet: AI providers, transcription, SOAP generation, RAG, documents.
 `app/providers` and `app/workers` are intentionally empty packages that later
 phases fill — they mark the structure from PRD §16, they are not dead code to
 be deleted.

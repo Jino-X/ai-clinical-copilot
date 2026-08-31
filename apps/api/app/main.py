@@ -17,6 +17,7 @@ from app.core.middleware import (
 from app.core.security import SupabaseTokenVerifier
 from app.db.pool import Database
 from app.services.audit.service import AuditService
+from app.services.storage.service import StorageService
 
 logger = get_logger(__name__)
 
@@ -37,6 +38,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.http_client = http_client
     app.state.token_verifier = SupabaseTokenVerifier(settings, http_client)
     app.state.audit_service = AuditService(database)
+    app.state.storage_service = StorageService(settings)
 
     await database.connect()
     logger.info(

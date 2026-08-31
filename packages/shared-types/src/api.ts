@@ -223,3 +223,80 @@ export type TimelineEventResponse = {
   source_id: string | null;
   created_at: string;
 };
+
+// --- Phase 4: Consultations --------------------------------------------------
+
+export type ConsultationStatus =
+  | "scheduled"
+  | "in_progress"
+  | "completed"
+  | "cancelled";
+
+export type ConsentType = "audio_recording" | "ai_processing";
+
+export type ConsultationSummary = {
+  id: string;
+  patient_id: string;
+  doctor_id: string;
+  status: ConsultationStatus;
+  chief_complaint: string | null;
+  started_at: string | null;
+  ended_at: string | null;
+  duration_seconds: number | null;
+  created_at: string;
+};
+
+export type ConsultationResponse = {
+  id: string;
+  organization_id: string;
+  patient_id: string;
+  doctor_id: string;
+  status: ConsultationStatus;
+  chief_complaint: string | null;
+  started_at: string | null;
+  ended_at: string | null;
+  duration_seconds: number | null;
+  audio_storage_path: string | null;
+  audio_content_type: string | null;
+  audio_size_bytes: number | null;
+  doctor_summary: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CreateConsultationRequest = {
+  patient_id: string;
+  chief_complaint?: string | null;
+};
+
+export type ConsentResponse = {
+  id: string;
+  organization_id: string;
+  patient_id: string;
+  consultation_id: string | null;
+  consent_type: ConsentType;
+  granted: boolean;
+  recorded_by: string;
+  notes: string | null;
+  created_at: string;
+};
+
+export type GrantConsentRequest = {
+  patient_id: string;
+  consultation_id?: string | null;
+  consent_type: ConsentType;
+  notes?: string | null;
+};
+
+export type CreateUploadUrlResponse = {
+  upload_url: string;
+  storage_path: string;
+  expires_at: string;
+};
+
+export type AudioUrlResponse = {
+  download_url: string;
+  expires_at: string;
+  content_type: string | null;
+  size_bytes: number | null;
+};

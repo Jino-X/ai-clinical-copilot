@@ -147,8 +147,8 @@ async def test_rejects_a_symmetric_token_signed_with_the_wrong_secret(
     jwks_client: httpx.AsyncClient, make_token: Any
 ) -> None:
     verifier = SupabaseTokenVerifier(
-        make_settings(  # noqa: S106
-            supabase_jwt_secret="the-real-secret-of-sufficient-length-000"
+        make_settings(
+            supabase_jwt_secret="the-real-secret-of-sufficient-length-000"  # noqa: S106
         ),
         jwks_client,
     )

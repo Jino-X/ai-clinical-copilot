@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Trash2, Plus, Calendar } from "lucide-react";
+import { Trash2, Plus, Calendar, Stethoscope } from "lucide-react";
 import type { TimelineEventType } from "@clinical-copilot/shared-types";
 
 import {
@@ -60,8 +60,10 @@ const EVENT_TYPE_LABELS: Record<TimelineEventType, string> = {
 export default function PatientDetailPage() {
   const params = useParams<{ patientId: string }>();
   const patientId = params.patientId;
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [, startTransition] = useTransition();
+  const [startingConsultation, setStartingConsultation] = useState(false);
 
   const { data: patient, isLoading } = useQuery({
     queryKey: ["patients", patientId],
@@ -191,18 +193,42 @@ export default function PatientDetailPage() {
     );
   }
 
+  const startConsultation = () => {
+    setStartingConsultation(true);
+    import("@/lib/api/consultations")
+      .then(({ createConsultationApi }) =>
+        createConsultationApi({ patient_id: patientId }),
+      )
+      .then((consultation) => {
+        toast.success("Consultation created");
+        router.push(`/dashboard/consultations/${consultation.id}`);
+      })
+      .catch((e) => {
+        toast.error(
+          e instanceof ApiError ? e.message : "Something went wrong",
+        );
+      })
+      .finally(() => setStartingConsultation(false));
+  };
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {patient.first_name} {patient.last_name}
-        </h1>
-        <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-          {patient.date_of_birth && <span>DOB: {patient.date_of_birth}</span>}
-          <span className="capitalize">· {patient.sex}</span>
-          {patient.phone && <span>· {patient.phone}</span>}
-          {patient.email && <span>· {patient.email}</span>}
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {patient.first_name} {patient.last_name}
+          </h1>
+          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+            {patient.date_of_birth && <span>DOB: {patient.date_of_birth}</span>}
+            <span className="capitalize">· {patient.sex}</span>
+            {patient.phone && <span>· {patient.phone}</span>}
+            {patient.email && <span>· {patient.email}</span>}
+          </div>
         </div>
+        <Button onClick={startConsultation} disabled={startingConsultation}>
+          <Stethoscope className="size-4" aria-hidden />
+          {startingConsultation ? "Starting…" : "Start consultation"}
+        </Button>
       </div>
 
       <Tabs defaultValue="overview">

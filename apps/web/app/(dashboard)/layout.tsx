@@ -77,6 +77,14 @@ export default async function DashboardLayout({
               </li>
               <li>
                 <Link
+                  href="/dashboard/consultations"
+                  className="block rounded-md px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  Consultations
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/dashboard/organization"
                   className="block rounded-md px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
