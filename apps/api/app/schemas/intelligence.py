@@ -26,6 +26,7 @@ class PatientSummaryResponse(BaseModel):
 
 class VisitComparisonRequest(BaseModel):
     """Request to compare two consultations."""
+
     model_config = ConfigDict(extra="forbid")
 
     previous_consultation_id: UUID
@@ -57,6 +58,7 @@ class VisitComparisonResponse(BaseModel):
 
 class PatientQuestionRequest(BaseModel):
     """Doctor asks a question about the patient's history (PRD §8)."""
+
     model_config = ConfigDict(extra="forbid")
 
     question: str = Field(min_length=1, max_length=2000)

@@ -130,9 +130,7 @@ class IntelligenceService:
     def __init__(self, llm: LLMProvider) -> None:
         self._llm = llm
 
-    async def generate_summary(
-        self, *, patient_context: str
-    ) -> dict[str, Any]:
+    async def generate_summary(self, *, patient_context: str) -> dict[str, Any]:
         """Generate a patient summary from aggregated patient records."""
         user_prompt = (
             "Generate a patient summary from the following records.\n\n"

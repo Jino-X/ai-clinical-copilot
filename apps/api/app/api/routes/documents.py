@@ -70,9 +70,7 @@ async def create_upload_url(
     """
     context.require(Permission.PATIENT_WRITE)
 
-    patient = await _patient_repo.get(
-        connection, patient_id=payload.patient_id
-    )
+    patient = await _patient_repo.get(connection, patient_id=payload.patient_id)
     if patient is None or patient.organization_id != context.organization_id:
         raise NotFoundError("Patient not found")
 
@@ -213,9 +211,7 @@ async def get_download_url(
         raise NotFoundError("Document not found")
 
     storage = _get_storage_service(request)
-    signed = await storage.create_download_url(
-        storage_path=doc.storage_path
-    )
+    signed = await storage.create_download_url(storage_path=doc.storage_path)
     return DocumentDownloadUrlResponse(
         download_url=signed.download_url,
         expires_at=signed.expires_at,
@@ -287,9 +283,7 @@ async def extract_document(
         # Extract text. For text-based formats (PDF, DOCX, TXT), we extract
         # directly. For images (JPG, PNG), OCR would be needed. For the MVP,
         # we decode text-based content; images require an OCR provider.
-        extracted_text = _extract_text(
-            content_bytes, content_type or doc.content_type
-        )
+        extracted_text = _extract_text(content_bytes, content_type or doc.content_type)
 
         if not extracted_text or not extracted_text.strip():
             # Could not extract text (e.g., image without OCR).
@@ -417,6 +411,7 @@ async def verify_document(
         raise NotFoundError("Document not found")
     if doc.status == DocumentStatus.VERIFIED:
         from app.core.errors import ConflictError
+
         raise ConflictError("Document is already verified")
 
     verified = await _repo.verify(

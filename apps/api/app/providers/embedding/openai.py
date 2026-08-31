@@ -76,9 +76,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
             model=self._model,
         )
 
-    async def embed_batch(
-        self, *, texts: list[str]
-    ) -> list[EmbeddingResponse]:
+    async def embed_batch(self, *, texts: list[str]) -> list[EmbeddingResponse]:
         if not self._api_key:
             raise ServiceUnavailableError("OpenAI API key is not configured")
 

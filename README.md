@@ -7,15 +7,17 @@ without explicit approval.
 See [`PRD.md`](./PRD.md) for the product specification and
 [`AGENTS.md`](./AGENTS.md) for architecture and working conventions.
 
-> **Status: Phase 8 (RAG) complete.** Supabase Auth, multi-tenant
-> organizations, role-based access control, patient CRUD with search, medical
-> history, timeline, consultation sessions with consent and audio recording,
-> AI-powered transcription and SOAP note generation with doctor
-> editing/approval/versioning, AI patient intelligence (summary, visit
+> **Status: Phase 8 (RAG) complete + Local AI Integration.** Supabase Auth,
+> multi-tenant organizations, role-based access control, patient CRUD with
+> search, medical history, timeline, consultation sessions with consent and
+> audio recording, AI-powered transcription and SOAP note generation with
+> doctor editing/approval/versioning, AI patient intelligence (summary, visit
 > comparison, history Q&A), medical document management (upload, AI
-> extraction, doctor verification), and RAG (pgvector embeddings, hybrid
-> retrieval, patient-scoped Q&A with source references) are in place. Do not
-> point this at real patient data.
+> extraction, doctor verification), RAG (pgvector embeddings, hybrid
+> retrieval, patient-scoped Q&A with source references), and local AI
+> integration (IndicConformer STT, Qwen3 8B via Ollama, Tamil→English
+> normalization, clinical extraction, visit comparison, doctor summaries) are
+> in place. Do not point this at real patient data.
 
 ## Layout
 
@@ -81,6 +83,39 @@ LLM_PROVIDER=openai
 TRANSCRIPTION_PROVIDER=openai
 OPENAI_API_KEY=sk-...
 ```
+
+### Local AI (development only)
+
+For local development without OpenAI, use [Ollama](https://ollama.com) with
+Qwen3 8B and [AI4Bharat IndicConformer](https://github.com/AI4Bharat/IndicConformerASR)
+for Tamil/English speech-to-text:
+
+1. Install Ollama and pull the model:
+   ```bash
+   brew install ollama
+   ollama pull qwen3:8b
+   ollama serve
+   ```
+
+2. Install IndicConformer dependencies:
+   ```bash
+   pip install torch torchaudio transformers
+   ```
+
+3. Configure `apps/api/.env`:
+   ```
+   LLM_PROVIDER=ollama
+   OLLAMA_BASE_URL=http://localhost:11434
+   OLLAMA_MODEL=qwen3:8b
+   TRANSCRIPTION_PROVIDER=indicconformer
+   INDICCONFORMER_LANGUAGE=ta
+   TRANSLATION_PROVIDER=local
+   ```
+
+The local AI pipeline supports Tamil, English, and Tamil-English code-switching.
+The original transcript is always preserved; English normalization, clinical
+extraction, and doctor summaries are stored separately. All AI output is a
+draft until a doctor reviews and approves it.
 
 Or with Docker, backend plus a local pgvector database:
 

@@ -12,6 +12,7 @@ from app.repositories.embeddings import EmbeddingRepository
 @dataclass(frozen=True, slots=True)
 class RetrievalResult:
     """A single retrieved chunk with its source reference."""
+
     source_type: str
     source_id: UUID
     source_label: str
@@ -119,9 +120,7 @@ class RagService:
     ) -> list[dict]:
         """Keyword search via ILIKE on chunk_text."""
         # Escape SQL wildcards in the query.
-        escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace(
-            "_", "\\_"
-        )
+        escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         pattern = f"%{escaped}%"
         rows = await connection.fetch(
             """
@@ -158,11 +157,8 @@ class RagService:
 
         return "\n\n".join(sections)
 
-    def build_source_references(
-        self, results: list[RetrievalResult]
-    ) -> list[str]:
+    def build_source_references(self, results: list[RetrievalResult]) -> list[str]:
         """Build a list of source reference labels for the LLM response."""
         return [
-            f"{r.source_label} ({r.source_type}, match: {r.match_type})"
-            for r in results
+            f"{r.source_label} ({r.source_type}, match: {r.match_type})" for r in results
         ]

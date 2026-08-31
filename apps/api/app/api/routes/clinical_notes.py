@@ -276,9 +276,7 @@ async def generate_soap(
         connection, consultation_id=consultation_id
     )
     if transcript is None:
-        raise ConflictError(
-            "No transcript found. Transcribe the audio first."
-        )
+        raise ConflictError("No transcript found. Transcribe the audio first.")
 
     factory = _get_provider_factory(request)
     if not factory.llm_configured:
@@ -384,9 +382,7 @@ async def edit_clinical_note(
     if note is None:
         raise NotFoundError("Clinical note not found")
     if note.status == "approved":
-        raise ConflictError(
-            "Approved clinical notes cannot be edited (PRD §23)"
-        )
+        raise ConflictError("Approved clinical notes cannot be edited (PRD §23)")
     if note.status == "rejected":
         raise ConflictError("Rejected notes cannot be edited")
 
@@ -488,9 +484,7 @@ async def reject_clinical_note(
         rejected_by=context.user.id,
     )
     if note is None:
-        raise NotFoundError(
-            "Clinical note not found or already approved/rejected"
-        )
+        raise NotFoundError("Clinical note not found or already approved/rejected")
 
     await audit.record(
         AuditAction.CLINICAL_NOTE_EDITED,

@@ -155,9 +155,7 @@ class ClinicalNoteRepository:
         )
 
         latest_version = (
-            SoapNoteResponse.model_validate(dict(version_row))
-            if version_row
-            else None
+            SoapNoteResponse.model_validate(dict(version_row)) if version_row else None
         )
 
         response = ClinicalNoteResponse.model_validate(dict(note_row))
@@ -228,15 +226,18 @@ class ClinicalNoteRepository:
                 note_id,
                 new_version,
                 source.value,
-                content.subjective if content.subjective is not None
+                content.subjective
+                if content.subjective is not None
                 else prev_row["subjective"],
-                content.objective if content.objective is not None
+                content.objective
+                if content.objective is not None
                 else prev_row["objective"],
-                content.assessment if content.assessment is not None
+                content.assessment
+                if content.assessment is not None
                 else prev_row["assessment"],
-                content.plan if content.plan is not None
-                else prev_row["plan"],
-                content.follow_up if content.follow_up is not None
+                content.plan if content.plan is not None else prev_row["plan"],
+                content.follow_up
+                if content.follow_up is not None
                 else prev_row["follow_up"],
                 authored_by,
                 content.edit_note,

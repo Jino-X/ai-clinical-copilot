@@ -8,6 +8,7 @@ from typing import Any
 @dataclass(frozen=True, slots=True)
 class LLMResponse:
     """The output of an LLM call with structured JSON output."""
+
     content: dict[str, Any]
     provider: str
     model: str

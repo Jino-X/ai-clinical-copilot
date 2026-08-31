@@ -442,6 +442,4 @@ async def list_patient_consultations(
     connection: TenantConnection,
 ) -> list[ConsultationSummary]:
     _require_patient_access(context)
-    return await _consultation_repo.list_for_patient(
-        connection, patient_id=patient_id
-    )
+    return await _consultation_repo.list_for_patient(connection, patient_id=patient_id)

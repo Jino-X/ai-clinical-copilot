@@ -164,16 +164,11 @@ class EmbeddingService:
         for d in documents:
             if d.status.value != "verified":
                 continue
-            doc = await self._document_repo.get(
-                connection, document_id=d.id
-            )
+            doc = await self._document_repo.get(connection, document_id=d.id)
             if doc and doc.extracted_text:
                 # Chunk the extracted text (max ~2000 chars per chunk).
                 text = doc.extracted_text
-                chunks = [
-                    text[i : i + 2000]
-                    for i in range(0, len(text), 2000)
-                ]
+                chunks = [text[i : i + 2000] for i in range(0, len(text), 2000)]
                 for i, chunk in enumerate(chunks):
                     label = f"Document: {doc.title}"
                     if len(chunks) > 1:

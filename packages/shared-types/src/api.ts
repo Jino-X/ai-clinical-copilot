@@ -497,3 +497,100 @@ export type RagIndexStatusResponse = {
   patient_id: string;
   embedding_count: number;
 };
+
+// --- Local AI Integration ----------------------------------------------------
+
+export type Symptom = {
+  name: string;
+  duration: string | null;
+  severity: string | null;
+  onset: string | null;
+  status: string | null;
+  trigger: string | null;
+};
+
+export type PatientInfo = {
+  name: string | null;
+  age: string | null;
+  gender: string | null;
+};
+
+export type ClinicalExtraction = {
+  patient: PatientInfo;
+  chief_complaint: string | null;
+  symptoms: Symptom[];
+  medical_conditions: string[];
+  medications_mentioned: string[];
+  allergies_mentioned: string[];
+  tests_mentioned: string[];
+  doctor_observations: string[];
+  treatments_mentioned: string[];
+  follow_up: string | null;
+  important_information: string[];
+  uncertainties: string[];
+};
+
+export type ChangeType =
+  | "new"
+  | "improved"
+  | "worsened"
+  | "unchanged"
+  | "resolved"
+  | "unknown";
+
+export type VisitChange = {
+  item: string;
+  previous: string | null;
+  current: string | null;
+  change: ChangeType;
+};
+
+export type VisitComparison = {
+  changes: VisitChange[];
+};
+
+export type NormalizeResponse = {
+  transcript_id: string;
+  english_text: string;
+  provider: string;
+  model: string;
+  source_language: string | null;
+};
+
+export type ExtractResponse = {
+  extraction_id: string;
+  extraction: ClinicalExtraction;
+  provider: string;
+  model: string;
+};
+
+export type ComparisonResponse = {
+  comparison: VisitComparison;
+  provider: string;
+  model: string;
+};
+
+export type DoctorSummaryResponse = {
+  summary: string;
+  source_references: string[];
+  provider: string;
+  model: string;
+};
+
+export type ProcessingStage =
+  | "idle"
+  | "transcribing"
+  | "normalizing"
+  | "extracting"
+  | "summarizing"
+  | "ready"
+  | "failed";
+
+export type ProcessingStatusResponse = {
+  stage: ProcessingStage;
+  has_transcript: boolean;
+  has_english_transcript: boolean;
+  has_extraction: boolean;
+  has_summary: boolean;
+  error_message: string | null;
+};

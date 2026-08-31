@@ -85,9 +85,7 @@ async def generate_patient_summary(
         )
 
         service = IntelligenceService(factory.llm)
-        result = await service.generate_summary(
-            patient_context=patient_context
-        )
+        result = await service.generate_summary(patient_context=patient_context)
 
         duration_ms = int((time.monotonic() - start_time) * 1000)
 

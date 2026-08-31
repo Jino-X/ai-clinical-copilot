@@ -7,6 +7,7 @@ from app.api.routes import (
     documents,
     health,
     intelligence,
+    local_ai,
     organizations,
     patients,
     rag,
@@ -22,3 +23,4 @@ api_router.include_router(clinical_notes.router)
 api_router.include_router(intelligence.router)
 api_router.include_router(documents.router)
 api_router.include_router(rag.router)
+api_router.include_router(local_ai.router)

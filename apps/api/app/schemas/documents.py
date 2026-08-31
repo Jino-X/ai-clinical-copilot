@@ -31,6 +31,7 @@ class DocumentCategory(StrEnum):
 
 class CreateUploadUrlRequest(BaseModel):
     """Request a signed URL for uploading a document."""
+
     model_config = ConfigDict(extra="forbid")
 
     patient_id: UUID
@@ -42,6 +43,7 @@ class CreateUploadUrlRequest(BaseModel):
 
 class CreateUploadUrlResponse(BaseModel):
     """A signed URL for uploading a document to private storage."""
+
     upload_url: str
     storage_path: str
     document_id: UUID
@@ -78,6 +80,7 @@ class MedicalDocumentResponse(BaseModel):
 
 class MedicalDocumentSummary(BaseModel):
     """Lightweight document record for list views."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
@@ -96,6 +99,7 @@ class MedicalDocumentSummary(BaseModel):
 
 class VerifyDocumentRequest(BaseModel):
     """Doctor verifies the extracted information (PRD §9)."""
+
     model_config = ConfigDict(extra="forbid")
 
     category: DocumentCategory | None = None
@@ -105,6 +109,7 @@ class VerifyDocumentRequest(BaseModel):
 
 class UpdateDocumentRequest(BaseModel):
     """Update document metadata."""
+
     model_config = ConfigDict(extra="forbid")
 
     title: str | None = Field(default=None, min_length=1, max_length=200)

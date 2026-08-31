@@ -77,6 +77,23 @@ logging for indexing and RAG Q&A, frontend RAG tab with index button, index
 status display, Q&A interface with source reference badges (source type,
 label, similarity %, match type).
 
+Delivered in Local AI Integration: IndicConformer STT provider
+(AI4Bharat 600M multilingual, lazy-loaded, ffmpeg audio conversion, 16kHz
+mono), OllamaLLMProvider (Qwen3 8B via Ollama native chat API with structured
+JSON output), TranslationProvider abstraction with LocalTranslationProvider
+(uses Ollama/Qwen3 for Tamil→English normalization, preserves medical
+terminology), ClinicalExtractionService (structured Pydantic schema, never
+invents data), VisitComparisonService (new/improved/worsened/unchanged/
+resolved/unknown), DoctorSummaryService (combines Supabase patient records +
+current extraction + comparison), migration extending transcripts with
+english_text column + clinical_extractions + doctor_summaries tables (RLS
+on all), local_ai routes (normalize, extract, compare, summary, processing-
+status, get extraction, get summary), frontend AiPipeline component with
+stage badges, individual step buttons, full pipeline runner, extraction
+display (symptoms, conditions, medications, allergies, uncertainties),
+visit comparison display (color-coded change types), doctor summary display
+with source references.
+
 Not built yet: production hardening (Phase 9).
 `app/workers` is an intentionally empty package that later phases fill — it
 marks the structure from PRD §16, it is not dead code to be deleted.

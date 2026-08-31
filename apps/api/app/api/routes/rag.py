@@ -37,6 +37,7 @@ def _get_provider_factory(request: Request) -> ProviderFactory:
 
 class IndexResponse(BaseModel):
     """Result of indexing a patient's records."""
+
     model_config = ConfigDict(from_attributes=True)
 
     patient_id: UUID
@@ -130,6 +131,7 @@ async def index_patient(
 
 class RagQuestionRequest(BaseModel):
     """Doctor asks a question answered via RAG retrieval (PRD §10)."""
+
     model_config = ConfigDict(extra="forbid")
 
     question: str = Field(min_length=1, max_length=2000)
@@ -137,6 +139,7 @@ class RagQuestionRequest(BaseModel):
 
 class RagSourceReference(BaseModel):
     """A source reference for a RAG answer (PRD §10)."""
+
     source_type: str
     source_id: UUID
     source_label: str
@@ -146,6 +149,7 @@ class RagSourceReference(BaseModel):
 
 class RagQuestionResponse(BaseModel):
     """RAG-enhanced answer to a patient history question."""
+
     model_config = ConfigDict(from_attributes=True)
 
     answer: str
@@ -268,6 +272,7 @@ async def ask_with_rag(
 
 class IndexStatusResponse(BaseModel):
     """Status of a patient's embedding index."""
+
     model_config = ConfigDict(from_attributes=True)
 
     patient_id: UUID
@@ -285,9 +290,7 @@ async def index_status(
     connection: TenantConnection,
 ) -> IndexStatusResponse:
     context.require(Permission.PATIENT_READ)
-    count = await _embedding_repo.count_for_patient(
-        connection, patient_id=patient_id
-    )
+    count = await _embedding_repo.count_for_patient(connection, patient_id=patient_id)
     return IndexStatusResponse(
         patient_id=patient_id,
         embedding_count=count,

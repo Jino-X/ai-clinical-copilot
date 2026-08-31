@@ -57,6 +57,7 @@ class ConsultationResponse(BaseModel):
 
 class ConsultationSummary(BaseModel):
     """Lightweight consultation record for list views."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
@@ -101,6 +102,7 @@ class ConsentResponse(BaseModel):
 
 class CreateUploadUrlRequest(BaseModel):
     """Request a signed URL for uploading audio to private storage."""
+
     model_config = ConfigDict(extra="forbid")
 
     content_type: str = Field(
@@ -125,6 +127,7 @@ class CreateUploadUrlResponse(BaseModel):
 
 class ConfirmUploadRequest(BaseModel):
     """Confirm that an audio upload completed and record the path."""
+
     model_config = ConfigDict(extra="forbid")
 
     storage_path: str

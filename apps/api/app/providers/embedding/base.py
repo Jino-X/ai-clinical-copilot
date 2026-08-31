@@ -7,6 +7,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True, slots=True)
 class EmbeddingResponse:
     """The output of an embedding call."""
+
     vector: list[float]
     provider: str
     model: str
@@ -35,6 +36,4 @@ class EmbeddingProvider(ABC):
     async def embed(self, *, text: str) -> EmbeddingResponse: ...
 
     @abstractmethod
-    async def embed_batch(
-        self, *, texts: list[str]
-    ) -> list[EmbeddingResponse]: ...
+    async def embed_batch(self, *, texts: list[str]) -> list[EmbeddingResponse]: ...

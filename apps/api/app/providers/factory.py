@@ -6,9 +6,12 @@ from app.core.logging import get_logger
 from app.providers.embedding.base import EmbeddingProvider
 from app.providers.embedding.openai import OpenAIEmbeddingProvider
 from app.providers.llm.base import LLMProvider
+from app.providers.llm.ollama import OllamaLLMProvider
 from app.providers.llm.openai import OpenAILLMProvider
 from app.providers.transcription.base import TranscriptionProvider
 from app.providers.transcription.openai import OpenAITranscriptionProvider
+from app.providers.translation.base import TranslationProvider
+from app.providers.translation.local import LocalTranslationProvider
 
 logger = get_logger(__name__)
 
@@ -26,6 +29,7 @@ class ProviderFactory:
         self._llm: LLMProvider | None = None
         self._transcription: TranscriptionProvider | None = None
         self._embedding: EmbeddingProvider | None = None
+        self._translation: TranslationProvider | None = None
 
     @property
     def llm(self) -> LLMProvider:
@@ -38,10 +42,10 @@ class ProviderFactory:
 
         if provider_name == "openai":
             self._llm = OpenAILLMProvider(self._settings)
+        elif provider_name == "ollama":
+            self._llm = OllamaLLMProvider(self._settings)
         else:
-            raise ServiceUnavailableError(
-                f"Unknown LLM provider: {provider_name}"
-            )
+            raise ServiceUnavailableError(f"Unknown LLM provider: {provider_name}")
 
         logger.info("llm_provider_initialized", provider=provider_name)
         return self._llm
@@ -53,12 +57,16 @@ class ProviderFactory:
 
         provider_name = self._settings.transcription_provider
         if provider_name is None:
-            raise ServiceUnavailableError(
-                "Transcription provider is not configured"
-            )
+            raise ServiceUnavailableError("Transcription provider is not configured")
 
         if provider_name == "openai":
             self._transcription = OpenAITranscriptionProvider(self._settings)
+        elif provider_name == "indicconformer":
+            from app.providers.transcription.indicconformer import (
+                IndicConformerProvider,
+            )
+
+            self._transcription = IndicConformerProvider(self._settings)
         else:
             raise ServiceUnavailableError(
                 f"Unknown transcription provider: {provider_name}"
@@ -82,22 +90,39 @@ class ProviderFactory:
 
         provider_name = self._settings.embedding_provider
         if provider_name is None:
-            raise ServiceUnavailableError(
-                "Embedding provider is not configured"
-            )
+            raise ServiceUnavailableError("Embedding provider is not configured")
 
         if provider_name == "openai":
             self._embedding = OpenAIEmbeddingProvider(self._settings)
         else:
-            raise ServiceUnavailableError(
-                f"Unknown embedding provider: {provider_name}"
-            )
+            raise ServiceUnavailableError(f"Unknown embedding provider: {provider_name}")
 
-        logger.info(
-            "embedding_provider_initialized", provider=provider_name
-        )
+        logger.info("embedding_provider_initialized", provider=provider_name)
         return self._embedding
 
     @property
     def embedding_configured(self) -> bool:
         return self._settings.embedding_provider is not None
+
+    @property
+    def translation(self) -> TranslationProvider:
+        if self._translation is not None:
+            return self._translation
+
+        provider_name = self._settings.translation_provider
+        if provider_name is None:
+            raise ServiceUnavailableError("Translation provider is not configured")
+
+        if provider_name == "local":
+            self._translation = LocalTranslationProvider(self._settings)
+        else:
+            raise ServiceUnavailableError(
+                f"Unknown translation provider: {provider_name}"
+            )
+
+        logger.info("translation_provider_initialized", provider=provider_name)
+        return self._translation
+
+    @property
+    def translation_configured(self) -> bool:
+        return self._settings.translation_provider is not None

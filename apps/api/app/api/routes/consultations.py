@@ -48,9 +48,7 @@ def _get_storage_service(request: Request) -> StorageService:
 async def list_consultations(
     context: OrganizationDep,
     connection: TenantConnection,
-    status_filter: Annotated[
-        ConsultationStatus | None, Query(alias="status")
-    ] = None,
+    status_filter: Annotated[ConsultationStatus | None, Query(alias="status")] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> list[ConsultationSummary]:
@@ -99,9 +97,7 @@ async def create_consultation(
     # Verify the patient exists and belongs to the caller's organization.
     # RLS would hide a cross-tenant patient, but we check explicitly so the
     # error message is clear rather than a generic "not found".
-    patient = await _patient_repo.get(
-        connection, patient_id=payload.patient_id
-    )
+    patient = await _patient_repo.get(connection, patient_id=payload.patient_id)
     if patient is None or patient.organization_id != context.organization_id:
         raise NotFoundError("Patient not found")
 
@@ -158,9 +154,7 @@ async def start_consultation(
     request: Request,
 ) -> ConsultationResponse:
     context.require(Permission.CONSULTATION_CONDUCT)
-    consultation = await _repo.start(
-        connection, consultation_id=consultation_id
-    )
+    consultation = await _repo.start(connection, consultation_id=consultation_id)
     if consultation is None:
         raise NotFoundError("Consultation not found or not in scheduled state")
     await audit.record(
@@ -187,9 +181,7 @@ async def complete_consultation(
     request: Request,
 ) -> ConsultationResponse:
     context.require(Permission.CONSULTATION_CONDUCT)
-    consultation = await _repo.complete(
-        connection, consultation_id=consultation_id
-    )
+    consultation = await _repo.complete(connection, consultation_id=consultation_id)
     if consultation is None:
         raise NotFoundError("Consultation not found or not in progress")
     await audit.record(
@@ -216,13 +208,9 @@ async def cancel_consultation(
     request: Request,
 ) -> ConsultationResponse:
     context.require(Permission.CONSULTATION_CONDUCT)
-    consultation = await _repo.cancel(
-        connection, consultation_id=consultation_id
-    )
+    consultation = await _repo.cancel(connection, consultation_id=consultation_id)
     if consultation is None:
-        raise NotFoundError(
-            "Consultation not found or already completed/cancelled"
-        )
+        raise NotFoundError("Consultation not found or already completed/cancelled")
     await audit.record(
         AuditAction.CONSULTATION_COMPLETED,
         actor_user_id=context.user.id,
@@ -254,17 +242,13 @@ async def create_audio_upload_url(
 ) -> CreateUploadUrlResponse:
     context.require(Permission.CONSULTATION_CONDUCT)
 
-    consultation = await _repo.get(
-        connection, consultation_id=consultation_id
-    )
+    consultation = await _repo.get(connection, consultation_id=consultation_id)
     if consultation is None:
         raise NotFoundError("Consultation not found")
 
     # Only the conducting doctor may upload audio for this consultation.
     if consultation.doctor_id != context.user.id:
-        raise PermissionDeniedError(
-            "Only the conducting clinician may upload audio"
-        )
+        raise PermissionDeniedError("Only the conducting clinician may upload audio")
 
     storage = _get_storage_service(request)
     signed = await storage.create_upload_url(
@@ -294,15 +278,11 @@ async def confirm_audio_upload(
 ) -> ConsultationResponse:
     context.require(Permission.CONSULTATION_CONDUCT)
 
-    consultation = await _repo.get(
-        connection, consultation_id=consultation_id
-    )
+    consultation = await _repo.get(connection, consultation_id=consultation_id)
     if consultation is None:
         raise NotFoundError("Consultation not found")
     if consultation.doctor_id != context.user.id:
-        raise PermissionDeniedError(
-            "Only the conducting clinician may attach audio"
-        )
+        raise PermissionDeniedError("Only the conducting clinician may attach audio")
 
     consultation = await _repo.attach_audio(
         connection,
@@ -338,9 +318,7 @@ async def get_audio_download_url(
 ) -> AudioUrlResponse:
     context.require(Permission.PATIENT_READ)
 
-    consultation = await _repo.get(
-        connection, consultation_id=consultation_id
-    )
+    consultation = await _repo.get(connection, consultation_id=consultation_id)
     if consultation is None:
         raise NotFoundError("Consultation not found")
     if consultation.audio_storage_path is None:
@@ -374,14 +352,10 @@ async def list_consents(
     connection: TenantConnection,
 ) -> list[ConsentResponse]:
     context.require(Permission.PATIENT_READ)
-    consultation = await _repo.get(
-        connection, consultation_id=consultation_id
-    )
+    consultation = await _repo.get(connection, consultation_id=consultation_id)
     if consultation is None:
         raise NotFoundError("Consultation not found")
-    return await _repo.list_consents(
-        connection, patient_id=consultation.patient_id
-    )
+    return await _repo.list_consents(connection, patient_id=consultation.patient_id)
 
 
 @router.post(
@@ -400,17 +374,13 @@ async def grant_consent(
 ) -> ConsentResponse:
     context.require(Permission.CONSULTATION_CONDUCT)
 
-    consultation = await _repo.get(
-        connection, consultation_id=consultation_id
-    )
+    consultation = await _repo.get(connection, consultation_id=consultation_id)
     if consultation is None:
         raise NotFoundError("Consultation not found")
 
     # Ensure the consent is for the same patient as the consultation.
     if payload.patient_id != consultation.patient_id:
-        raise ConflictError(
-            "Consent patient does not match consultation patient"
-        )
+        raise ConflictError("Consent patient does not match consultation patient")
 
     consent = await _repo.grant_consent(
         connection,
@@ -449,15 +419,11 @@ async def revoke_consent(
 ) -> ConsentResponse:
     context.require(Permission.CONSULTATION_CONDUCT)
 
-    consultation = await _repo.get(
-        connection, consultation_id=consultation_id
-    )
+    consultation = await _repo.get(connection, consultation_id=consultation_id)
     if consultation is None:
         raise NotFoundError("Consultation not found")
     if payload.patient_id != consultation.patient_id:
-        raise ConflictError(
-            "Consent patient does not match consultation patient"
-        )
+        raise ConflictError("Consent patient does not match consultation patient")
 
     consent = await _repo.revoke_consent(
         connection,

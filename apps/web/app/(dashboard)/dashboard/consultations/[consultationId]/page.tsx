@@ -30,6 +30,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { SoapNoteEditor } from "@/components/soap-note-editor";
+import { AiPipeline } from "@/components/ai-pipeline";
 import { ApiError } from "@/lib/api/client";
 import {
   cancelConsultationApi,
@@ -375,6 +376,11 @@ export default function ConsultationDetailPage() {
           hasAudio={!!consultation.audio_storage_path}
           consultationStatus={consultation.status}
         />
+      )}
+
+      {/* Local AI Pipeline: normalize → extract → compare → summarize */}
+      {consultation.status !== "cancelled" && consultation.audio_storage_path && (
+        <AiPipeline consultationId={consultationId} />
       )}
 
       {/* State transitions */}

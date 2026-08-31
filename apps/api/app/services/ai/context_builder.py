@@ -27,9 +27,7 @@ class PatientContextBuilder:
         self, connection: asyncpg.Connection, *, patient_id: UUID
     ) -> str:
         """Build a comprehensive text context for a patient."""
-        patient = await self._patient_repo.get(
-            connection, patient_id=patient_id
-        )
+        patient = await self._patient_repo.get(connection, patient_id=patient_id)
         if patient is None:
             return "Patient not found."
 

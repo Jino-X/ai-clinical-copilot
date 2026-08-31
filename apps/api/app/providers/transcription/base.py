@@ -7,6 +7,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True, slots=True)
 class TranscriptionResult:
     """The output of a transcription call."""
+
     full_text: str
     provider: str
     model: str

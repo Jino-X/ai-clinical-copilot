@@ -57,10 +57,11 @@ class Settings(BaseSettings):
     cors_allow_origins: list[str] = ["http://localhost:3000"]
 
     # --- AI providers ------------------------------------------------------
-    # Provider selection. Only "openai" is implemented for the MVP (PRD §11).
+    # Provider selection. "openai" for production, "ollama" for local dev.
     llm_provider: str | None = None
     transcription_provider: str | None = None
     embedding_provider: str | None = None
+    translation_provider: str | None = None
     # OpenAI API key. Server-side only — never sent to the frontend.
     openai_api_key: SecretStr | None = None
     # OpenAI models, overridable for testing or cost control.
@@ -68,6 +69,15 @@ class Settings(BaseSettings):
     openai_transcription_model: str = "whisper-1"
     openai_embedding_model: str = "text-embedding-3-small"
     openai_embedding_dimensions: int = 1536
+    # Ollama (local LLM, PRD §11 local dev). Server-side only.
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "qwen3:8b"
+    ollama_timeout_seconds: int = 120
+    # IndicConformer (local STT, AI4Bharat). Server-side only.
+    indicconformer_model: str = "ai4bharat/indic-conformer-600m-multilingual"
+    indicconformer_language: str = "ta"
+    indicconformer_decoder: str = "ctc"  # "ctc" or "rnnt"
+    indicconformer_device: str = "cpu"  # "cpu", "mps", or "cuda"
 
     @field_validator("cors_allow_origins", mode="before")
     @classmethod

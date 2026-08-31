@@ -20,6 +20,7 @@ SIGNED_URL_TTL_SECONDS = 300  # 5 minutes
 @dataclass(frozen=True, slots=True)
 class SignedUpload:
     """A signed URL for uploading a file to private storage."""
+
     upload_url: str
     storage_path: str
     expires_at: str
@@ -28,6 +29,7 @@ class SignedUpload:
 @dataclass(frozen=True, slots=True)
 class SignedDownload:
     """A signed URL for downloading a file from private storage."""
+
     download_url: str
     expires_at: str
     content_type: str | None
@@ -45,9 +47,7 @@ class StorageService:
 
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
-        self._base_url = (
-            settings.supabase_base_url if settings.supabase_url else None
-        )
+        self._base_url = settings.supabase_base_url if settings.supabase_url else None
         self._service_key = (
             settings.supabase_service_role_key.get_secret_value()
             if settings.supabase_service_role_key
@@ -105,9 +105,7 @@ class StorageService:
         if not self.configured:
             raise ServiceUnavailableError("Storage is not configured")
 
-        storage_path = self._storage_path(
-            organization_id, consultation_id, content_type
-        )
+        storage_path = self._storage_path(organization_id, consultation_id, content_type)
 
         # Supabase Storage v1 API: create a signed upload URL.
         url = (
@@ -189,9 +187,7 @@ class StorageService:
             f"{quote(object_path)}"
         )
         async with httpx.AsyncClient(timeout=30) as client:
-            info_response = await client.get(
-                info_url, headers=self._headers()
-            )
+            info_response = await client.get(info_url, headers=self._headers())
         if info_response.status_code == 200:
             info = info_response.json()
             metadata = info.get("metadata", {})
@@ -246,11 +242,7 @@ class StorageService:
                     "Content-Type": content_type,
                     "x-upsert": "true",
                 },
-                params={
-                    "expires_at": str(
-                        int(time.time()) + SIGNED_URL_TTL_SECONDS
-                    )
-                },
+                params={"expires_at": str(int(time.time()) + SIGNED_URL_TTL_SECONDS)},
             )
 
         if response.status_code not in (200, 201):
@@ -272,9 +264,7 @@ class StorageService:
             expires_at=expires_at,
         )
 
-    async def download_document(
-        self, *, storage_path: str
-    ) -> tuple[bytes, str | None]:
+    async def download_document(self, *, storage_path: str) -> tuple[bytes, str | None]:
         """Download a document's raw bytes via a signed URL.
 
         Returns (content_bytes, content_type). Used for OCR/extraction.

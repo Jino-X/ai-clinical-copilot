@@ -46,6 +46,13 @@ plugins = ["pydantic.mypy"]
 module = ["structlog.*", "asyncpg.*", "asgi_lifespan.*"]
 follow_untyped_imports = true
 
+# IndicConformer uses torch, torchaudio, and transformers which are optional
+# local-development dependencies not installed in CI. They are imported lazily
+# so the API can start without them.
+[[tool.mypy.overrides]]
+module = ["torch.*", "torchaudio.*", "transformers.*"]
+ignore_missing_imports = true
+
 # asyncpg ships no type information, so its calls are untyped. The exception
 # is confined to modules that talk to it directly: the pool and the
 # repositories that issue queries through asyncpg connections.
@@ -60,6 +67,9 @@ module = [
     "app.repositories.clinical_notes",
     "app.repositories.transcripts",
     "app.repositories.ai_generations",
+    "app.repositories.clinical_extractions",
+    "app.repositories.doctor_summaries",
+    "app.repositories.embeddings",
 ]
 disallow_untyped_calls = false
 
