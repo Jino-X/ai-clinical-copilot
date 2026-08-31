@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Brain,
@@ -12,10 +12,14 @@ import {
   MessageSquare,
   Send,
   AlertCircle,
+  Database,
+  Search,
 } from "lucide-react";
 import type {
   PatientQuestionResponse,
   PatientSummaryResponse,
+  RagQuestionResponse,
+  RagSourceReference,
   VisitComparisonResponse,
 } from "@clinical-copilot/shared-types";
 
@@ -36,8 +40,13 @@ import {
   compareVisitsApi,
   generatePatientSummaryApi,
 } from "@/lib/api/intelligence";
+import {
+  askWithRagApi,
+  getIndexStatusApi,
+  indexPatientApi,
+} from "@/lib/api/rag";
 
-type Tab = "summary" | "compare" | "qa";
+type Tab = "summary" | "compare" | "qa" | "rag";
 
 export function PatientIntelligence({
   patientId,
@@ -79,6 +88,12 @@ export function PatientIntelligence({
             icon={<MessageSquare className="size-3.5" aria-hidden />}
             label="Ask"
           />
+          <TabButton
+            active={tab === "rag"}
+            onClick={() => setTab("rag")}
+            icon={<Search className="size-3.5" aria-hidden />}
+            label="RAG"
+          />
         </div>
         <Separator />
         {tab === "summary" && <SummaryTab patientId={patientId} />}
@@ -86,6 +101,7 @@ export function PatientIntelligence({
           <CompareTab patientId={patientId} consultationIds={consultationIds} />
         )}
         {tab === "qa" && <QaTab patientId={patientId} />}
+        {tab === "rag" && <RagTab patientId={patientId} />}
       </CardContent>
     </Card>
   );
@@ -504,6 +520,190 @@ function QaTab({ patientId }: { patientId: string }) {
         </Button>
       </div>
     </div>
+  );
+}
+
+// --- RAG tab ----------------------------------------------------------------
+
+type RagQaItem = {
+  question: string;
+  response: RagQuestionResponse;
+};
+
+function RagTab({ patientId }: { patientId: string }) {
+  const [question, setQuestion] = useState("");
+  const [history, setHistory] = useState<RagQaItem[]>([]);
+
+  const { data: indexStatus } = useQuery({
+    queryKey: ["rag", "index-status", patientId],
+    queryFn: () => getIndexStatusApi(patientId),
+  });
+
+  const indexMutation = useMutation({
+    mutationFn: () => indexPatientApi(patientId),
+    onSuccess: (data) => {
+      toast.success(`Indexed ${data.chunks_indexed} record chunks`);
+    },
+    onError: (e) =>
+      toast.error(
+        e instanceof ApiError ? e.message : "Indexing failed",
+      ),
+  });
+
+  const askMutation = useMutation({
+    mutationFn: (q: string) => askWithRagApi(patientId, q),
+    onSuccess: (response) => {
+      setHistory((prev) => [...prev, { question, response }]);
+      setQuestion("");
+    },
+    onError: (e) =>
+      toast.error(
+        e instanceof ApiError ? e.message : "Could not answer question",
+      ),
+  });
+
+  const suggestions = [
+    "What medications has this patient used recently?",
+    "What changed since the previous visit?",
+    "Summarize the patient's history.",
+    "When was the last blood test?",
+  ];
+
+  const embeddingCount = indexStatus?.embedding_count ?? 0;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between rounded-md bg-muted p-3">
+        <div className="flex items-center gap-2">
+          <Database className="size-4 text-muted-foreground" aria-hidden />
+          <span className="text-sm">
+            {embeddingCount > 0
+              ? `${embeddingCount} embeddings indexed`
+              : "Not indexed yet"}
+          </span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => indexMutation.mutate()}
+          disabled={indexMutation.isPending}
+        >
+          {indexMutation.isPending ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : (
+            <Database className="size-4" aria-hidden />
+          )}
+          {embeddingCount > 0 ? "Re-index" : "Index records"}
+        </Button>
+      </div>
+
+      {embeddingCount === 0 && (
+        <div className="flex items-center gap-2 rounded-md bg-muted/50 p-3 text-sm">
+          <AlertCircle
+            className="size-4 text-muted-foreground"
+            aria-hidden
+          />
+          <span className="text-muted-foreground">
+            Index this patient&apos;s records first to enable RAG-powered
+            Q&A with source references.
+          </span>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {history.map((item, i) => (
+          <RagQaItem key={i} item={item} />
+        ))}
+      </div>
+
+      {history.length === 0 && embeddingCount > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {suggestions.map((s) => (
+            <Button
+              key={s}
+              size="sm"
+              variant="outline"
+              onClick={() => setQuestion(s)}
+            >
+              {s}
+            </Button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <Textarea
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="Ask a question using RAG retrieval..."
+          rows={2}
+          disabled={embeddingCount === 0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              if (question.trim() && !askMutation.isPending) {
+                askMutation.mutate(question);
+              }
+            }
+          }}
+        />
+        <Button
+          onClick={() => question.trim() && askMutation.mutate(question)}
+          disabled={
+            askMutation.isPending || !question.trim() || embeddingCount === 0
+          }
+          size="icon"
+        >
+          {askMutation.isPending ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : (
+            <Send className="size-4" aria-hidden />
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function RagQaItem({ item }: { item: RagQaItem }) {
+  return (
+    <div className="space-y-2 rounded-md border p-3">
+      <p className="text-sm font-medium">
+        <Search className="mr-1 inline size-3" aria-hidden />
+        {item.question}
+      </p>
+      <p className="text-sm text-muted-foreground">{item.response.answer}</p>
+      {item.response.source_references.length > 0 && (
+        <div className="mt-1">
+          <p className="text-xs font-medium text-muted-foreground">
+            Source references ({item.response.source_references.length}):
+          </p>
+          <ul className="mt-1 space-y-0.5">
+            {item.response.source_references.map((source, j) => (
+              <li key={j}>
+                <RagSourceBadge source={source} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RagSourceBadge({ source }: { source: RagSourceReference }) {
+  const similarityPct = Math.round(source.similarity * 100);
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+      <Badge variant="outline" className="text-xs">
+        {source.source_type}
+      </Badge>
+      {source.source_label}
+      {source.match_type === "vector" && similarityPct > 0 && (
+        <span className="text-muted-foreground">({similarityPct}% match)</span>
+      )}
+      <span className="text-muted-foreground">[{source.match_type}]</span>
+    </span>
   );
 }
 

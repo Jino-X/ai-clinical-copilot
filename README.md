@@ -7,14 +7,15 @@ without explicit approval.
 See [`PRD.md`](./PRD.md) for the product specification and
 [`AGENTS.md`](./AGENTS.md) for architecture and working conventions.
 
-> **Status: Phase 7 (Documents) complete.** Supabase Auth, multi-tenant
+> **Status: Phase 8 (RAG) complete.** Supabase Auth, multi-tenant
 > organizations, role-based access control, patient CRUD with search, medical
 > history, timeline, consultation sessions with consent and audio recording,
 > AI-powered transcription and SOAP note generation with doctor
 > editing/approval/versioning, AI patient intelligence (summary, visit
-> comparison, history Q&A), and medical document management (upload,
-> AI extraction, doctor verification) are in place. There is no RAG yet. Do
-> not point this at real patient data.
+> comparison, history Q&A), medical document management (upload, AI
+> extraction, doctor verification), and RAG (pgvector embeddings, hybrid
+> retrieval, patient-scoped Q&A with source references) are in place. Do not
+> point this at real patient data.
 
 ## Layout
 
@@ -62,9 +63,16 @@ After authenticating, you'll reach the dashboard where you can create an
 organization, manage members, search/create patients, start consultations
 with audio recording and patient consent, transcribe audio, generate/edit/
 approve SOAP notes, use AI patient intelligence (summary, visit comparison,
-history Q&A), and upload medical documents for AI extraction and verification.
-API docs are at `http://localhost:8000/docs` (disabled when
-`ENVIRONMENT=production`).
+history Q&A), upload medical documents for AI extraction and verification,
+and use RAG-powered Q&A with source references. API docs are at
+`http://localhost:8000/docs` (disabled when `ENVIRONMENT=production`).
+
+To enable RAG features, set these in `apps/api/.env`:
+
+```
+EMBEDDING_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+```
 
 To enable AI features, set these in `apps/api/.env`:
 
@@ -92,6 +100,7 @@ psql "$DATABASE_URL" -f supabase/migrations/20260830020000_patients.sql
 psql "$DATABASE_URL" -f supabase/migrations/20260830030000_consultations.sql
 psql "$DATABASE_URL" -f supabase/migrations/20260830040000_clinical_notes.sql
 psql "$DATABASE_URL" -f supabase/migrations/20260830050000_documents.sql
+psql "$DATABASE_URL" -f supabase/migrations/20260830060000_rag.sql
 ```
 
 With the Supabase CLI, `supabase db push` applies the same directory.

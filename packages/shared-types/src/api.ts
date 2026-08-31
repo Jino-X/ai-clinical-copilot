@@ -468,3 +468,32 @@ export type DocumentDownloadUrlResponse = {
   content_type: string | null;
   size_bytes: number | null;
 };
+
+// --- Phase 8: RAG ------------------------------------------------------------
+
+export type RagSourceReference = {
+  source_type: string;
+  source_id: string;
+  source_label: string;
+  similarity: number;
+  match_type: string;
+};
+
+export type RagQuestionResponse = {
+  answer: string;
+  source_references: RagSourceReference[];
+  provider: string;
+  model: string;
+};
+
+export type RagIndexResponse = {
+  patient_id: string;
+  chunks_indexed: number;
+  provider: string;
+  model: string;
+};
+
+export type RagIndexStatusResponse = {
+  patient_id: string;
+  embedding_count: number;
+};

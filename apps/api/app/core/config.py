@@ -66,6 +66,8 @@ class Settings(BaseSettings):
     # OpenAI models, overridable for testing or cost control.
     openai_llm_model: str = "gpt-4o"
     openai_transcription_model: str = "whisper-1"
+    openai_embedding_model: str = "text-embedding-3-small"
+    openai_embedding_dimensions: int = 1536
 
     @field_validator("cors_allow_origins", mode="before")
     @classmethod

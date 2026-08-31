@@ -9,9 +9,9 @@ from app.api.routes import (
     intelligence,
     organizations,
     patients,
+    rag,
 )
 
-# Modules are registered here as each phase lands: rag.
 api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(auth.router)
@@ -21,3 +21,4 @@ api_router.include_router(consultations.router)
 api_router.include_router(clinical_notes.router)
 api_router.include_router(intelligence.router)
 api_router.include_router(documents.router)
+api_router.include_router(rag.router)

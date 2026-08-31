@@ -6,7 +6,7 @@ organised and how to verify it.
 
 ## Current state
 
-**Phases 1–7 are complete. Phase 8 (RAG) is next.**
+**Phases 1–8 are complete. Phase 9 (Production) is next.**
 
 Delivered in Phase 1: monorepo, Next.js app shell, FastAPI service with
 config/logging/error handling/health probes, the initial SQL migration,
@@ -66,7 +66,18 @@ trigger on verification, audit logging for document upload/view/extraction,
 frontend PatientDocuments component with upload, list, detail view, extraction
 trigger, and verify button integrated as Documents tab on patient detail page.
 
-Not built yet: RAG (pgvector, embeddings, hybrid retrieval).
+Delivered in Phase 8: RAG — pgvector extension, EmbeddingProvider interface
+with OpenAI implementation (text-embedding-3-small, 1536 dimensions),
+EmbeddingService indexing consultations/clinical notes/documents/medical
+history, RagService with hybrid retrieval (vector similarity + keyword
+search, cosine distance, HNSW index), RAG Q&A endpoint with source references
+for every answer, embedding index endpoint, index status endpoint, RLS on
+record_embeddings (scoped by organization_id + patient_id, PRD §10), audit
+logging for indexing and RAG Q&A, frontend RAG tab with index button, index
+status display, Q&A interface with source reference badges (source type,
+label, similarity %, match type).
+
+Not built yet: production hardening (Phase 9).
 `app/workers` is an intentionally empty package that later phases fill — it
 marks the structure from PRD §16, it is not dead code to be deleted.
 

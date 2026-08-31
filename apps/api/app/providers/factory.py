@@ -3,6 +3,8 @@ from __future__ import annotations
 from app.core.config import Settings
 from app.core.errors import ServiceUnavailableError
 from app.core.logging import get_logger
+from app.providers.embedding.base import EmbeddingProvider
+from app.providers.embedding.openai import OpenAIEmbeddingProvider
 from app.providers.llm.base import LLMProvider
 from app.providers.llm.openai import OpenAILLMProvider
 from app.providers.transcription.base import TranscriptionProvider
@@ -23,6 +25,7 @@ class ProviderFactory:
         self._settings = settings
         self._llm: LLMProvider | None = None
         self._transcription: TranscriptionProvider | None = None
+        self._embedding: EmbeddingProvider | None = None
 
     @property
     def llm(self) -> LLMProvider:
@@ -71,3 +74,30 @@ class ProviderFactory:
     @property
     def transcription_configured(self) -> bool:
         return self._settings.transcription_provider is not None
+
+    @property
+    def embedding(self) -> EmbeddingProvider:
+        if self._embedding is not None:
+            return self._embedding
+
+        provider_name = self._settings.embedding_provider
+        if provider_name is None:
+            raise ServiceUnavailableError(
+                "Embedding provider is not configured"
+            )
+
+        if provider_name == "openai":
+            self._embedding = OpenAIEmbeddingProvider(self._settings)
+        else:
+            raise ServiceUnavailableError(
+                f"Unknown embedding provider: {provider_name}"
+            )
+
+        logger.info(
+            "embedding_provider_initialized", provider=provider_name
+        )
+        return self._embedding
+
+    @property
+    def embedding_configured(self) -> bool:
+        return self._settings.embedding_provider is not None
