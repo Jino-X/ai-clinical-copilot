@@ -7,13 +7,14 @@ without explicit approval.
 See [`PRD.md`](./PRD.md) for the product specification and
 [`AGENTS.md`](./AGENTS.md) for architecture and working conventions.
 
-> **Status: Phase 6 (Patient Intelligence) complete.** Supabase Auth,
-> multi-tenant organizations, role-based access control, patient CRUD with
-> search, medical history, timeline, consultation sessions with consent and
-> audio recording, AI-powered transcription and SOAP note generation with
-> doctor editing/approval/versioning, and AI patient intelligence (summary,
-> visit comparison, history Q&A) are in place. There is no document management
-> yet. Do not point this at real patient data.
+> **Status: Phase 7 (Documents) complete.** Supabase Auth, multi-tenant
+> organizations, role-based access control, patient CRUD with search, medical
+> history, timeline, consultation sessions with consent and audio recording,
+> AI-powered transcription and SOAP note generation with doctor
+> editing/approval/versioning, AI patient intelligence (summary, visit
+> comparison, history Q&A), and medical document management (upload,
+> AI extraction, doctor verification) are in place. There is no RAG yet. Do
+> not point this at real patient data.
 
 ## Layout
 
@@ -60,9 +61,10 @@ npm run api:dev   # api on http://localhost:8000  (creates .venv on first run)
 After authenticating, you'll reach the dashboard where you can create an
 organization, manage members, search/create patients, start consultations
 with audio recording and patient consent, transcribe audio, generate/edit/
-approve SOAP notes, and use AI patient intelligence (summary, visit
-comparison, history Q&A). API docs are at `http://localhost:8000/docs`
-(disabled when `ENVIRONMENT=production`).
+approve SOAP notes, use AI patient intelligence (summary, visit comparison,
+history Q&A), and upload medical documents for AI extraction and verification.
+API docs are at `http://localhost:8000/docs` (disabled when
+`ENVIRONMENT=production`).
 
 To enable AI features, set these in `apps/api/.env`:
 
@@ -89,6 +91,7 @@ psql "$DATABASE_URL" -f supabase/migrations/20260830010000_auth_organizations.sq
 psql "$DATABASE_URL" -f supabase/migrations/20260830020000_patients.sql
 psql "$DATABASE_URL" -f supabase/migrations/20260830030000_consultations.sql
 psql "$DATABASE_URL" -f supabase/migrations/20260830040000_clinical_notes.sql
+psql "$DATABASE_URL" -f supabase/migrations/20260830050000_documents.sql
 ```
 
 With the Supabase CLI, `supabase db push` applies the same directory.

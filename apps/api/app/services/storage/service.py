@@ -35,12 +35,12 @@ class SignedDownload:
 
 
 class StorageService:
-    """Supabase Storage client for private audio files.
+    """Supabase Storage client for private files.
 
-    Audio files are stored in a private bucket and accessed only via signed
-    URLs (PRD §9: "Documents must never be publicly accessible"). The
-    service-role key is used for storage operations because the backend
-    manages access; the frontend never sees this key.
+    Files are stored in private buckets and accessed only via signed URLs
+    (PRD §9: "Documents must never be publicly accessible"). The service-role
+    key is used for storage operations because the backend manages access;
+    the frontend never sees this key.
     """
 
     def __init__(self, settings: Settings) -> None:
@@ -53,7 +53,8 @@ class StorageService:
             if settings.supabase_service_role_key
             else None
         )
-        self._bucket = "consultation-audio"
+        self._audio_bucket = "consultation-audio"
+        self._document_bucket = "medical-documents"
 
     @property
     def configured(self) -> bool:
@@ -203,3 +204,86 @@ class StorageService:
             content_type=content_type,
             size_bytes=size_bytes,
         )
+
+    # --- Documents ------------------------------------------------------------
+
+    def _document_storage_path(
+        self, organization_id: str, document_id: str, file_name: str
+    ) -> str:
+        """A tenant-scoped path for a medical document."""
+        # Preserve the file extension from the original name.
+        ext = ""
+        if "." in file_name:
+            ext = "." + file_name.rsplit(".", 1)[-1].lower()
+        return f"{organization_id}/{document_id}/document{ext}"
+
+    async def create_document_upload_url(
+        self,
+        *,
+        organization_id: str,
+        document_id: str,
+        file_name: str,
+        content_type: str,
+    ) -> SignedUpload:
+        """Create a signed upload URL for a medical document."""
+        if not self.configured:
+            raise ServiceUnavailableError("Storage is not configured")
+
+        storage_path = self._document_storage_path(
+            organization_id, document_id, file_name
+        )
+
+        url = (
+            f"{self._base_url}/storage/v1/object/upload/resumable/"
+            f"{quote(self._document_bucket)}/{quote(storage_path)}"
+        )
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(
+                url,
+                headers={
+                    **self._headers(),
+                    "Content-Type": content_type,
+                    "x-upsert": "true",
+                },
+                params={
+                    "expires_at": str(
+                        int(time.time()) + SIGNED_URL_TTL_SECONDS
+                    )
+                },
+            )
+
+        if response.status_code not in (200, 201):
+            logger.error(
+                "storage_document_upload_url_failed",
+                status=response.status_code,
+                bucket=self._document_bucket,
+                error_type="http_error",
+            )
+            raise ServiceUnavailableError("Could not create upload URL")
+
+        body = response.json()
+        upload_url = body.get("url") or str(response.url)
+        expires_at = str(int(time.time()) + SIGNED_URL_TTL_SECONDS)
+
+        return SignedUpload(
+            upload_url=upload_url,
+            storage_path=f"{self._document_bucket}/{storage_path}",
+            expires_at=expires_at,
+        )
+
+    async def download_document(
+        self, *, storage_path: str
+    ) -> tuple[bytes, str | None]:
+        """Download a document's raw bytes via a signed URL.
+
+        Returns (content_bytes, content_type). Used for OCR/extraction.
+        """
+        signed = await self.create_download_url(storage_path=storage_path)
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.get(signed.download_url)
+
+        if response.status_code != 200:
+            raise ServiceUnavailableError("Could not download document")
+
+        return response.content, signed.content_type

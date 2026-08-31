@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { PatientIntelligence } from "@/components/patient-intelligence";
+import { PatientDocuments } from "@/components/patient-documents";
 import { ApiError } from "@/lib/api/client";
 import {
   addAllergyApi,
@@ -253,6 +254,7 @@ export default function PatientDetailPage() {
           <TabsTrigger value="timeline">
             Timeline ({timeline.length})
           </TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="intelligence">Intelligence</TabsTrigger>
         </TabsList>
 
@@ -577,6 +579,11 @@ export default function PatientDetailPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Documents */}
+        <TabsContent value="documents" className="space-y-4">
+          <PatientDocuments patientId={patientId} />
         </TabsContent>
 
         {/* Intelligence */}

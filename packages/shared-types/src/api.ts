@@ -399,3 +399,72 @@ export type PatientQuestionResponse = {
   provider: string;
   model: string;
 };
+
+// --- Phase 7: Documents ------------------------------------------------------
+
+export type DocumentStatus =
+  | "uploaded"
+  | "processing"
+  | "extracted"
+  | "verified"
+  | "failed";
+
+export type DocumentCategory =
+  | "lab_report"
+  | "imaging_report"
+  | "prescription"
+  | "referral_letter"
+  | "discharge_summary"
+  | "clinical_note"
+  | "insurance_document"
+  | "identification"
+  | "other";
+
+export type MedicalDocumentResponse = {
+  id: string;
+  organization_id: string;
+  patient_id: string;
+  uploaded_by: string;
+  title: string;
+  storage_path: string;
+  file_name: string;
+  content_type: string;
+  file_size_bytes: number;
+  status: DocumentStatus;
+  category: DocumentCategory | null;
+  extracted_text: string | null;
+  extracted_data: Record<string, unknown> | null;
+  extraction_provider: string | null;
+  extraction_model: string | null;
+  verified_by: string | null;
+  verified_at: string | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MedicalDocumentSummary = {
+  id: string;
+  patient_id: string;
+  title: string;
+  file_name: string;
+  content_type: string;
+  status: DocumentStatus;
+  category: DocumentCategory | null;
+  verified_at: string | null;
+  created_at: string;
+};
+
+export type CreateDocumentUploadUrlResponse = {
+  upload_url: string;
+  storage_path: string;
+  document_id: string;
+  expires_at: string;
+};
+
+export type DocumentDownloadUrlResponse = {
+  download_url: string;
+  expires_at: string;
+  content_type: string | null;
+  size_bytes: number | null;
+};

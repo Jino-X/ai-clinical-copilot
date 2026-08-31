@@ -6,7 +6,7 @@ organised and how to verify it.
 
 ## Current state
 
-**Phases 1–6 are complete. Phase 7 (Documents) is next.**
+**Phases 1–7 are complete. Phase 8 (RAG) is next.**
 
 Delivered in Phase 1: monorepo, Next.js app shell, FastAPI service with
 config/logging/error handling/health probes, the initial SQL migration,
@@ -56,7 +56,17 @@ PRD §8), PatientContextBuilder aggregating patient data into LLM context,
 patient consultations list endpoint, frontend PatientIntelligence component
 with three tabs (Summary, Compare, Ask) integrated into patient detail page.
 
-Not built yet: documents (upload, OCR, extraction), RAG.
+Delivered in Phase 7: medical documents — upload to private Supabase Storage
+(PDF, JPG, PNG, DOCX, TXT), text extraction, AI classification (lab report,
+imaging, prescription, etc.), AI medical information extraction (key findings,
+medications, conditions, follow-up — always a draft), doctor verification
+workflow (verify → timeline event), document status machine (uploaded →
+processing → extracted → verified/failed), RLS on medical_documents, timeline
+trigger on verification, audit logging for document upload/view/extraction,
+frontend PatientDocuments component with upload, list, detail view, extraction
+trigger, and verify button integrated as Documents tab on patient detail page.
+
+Not built yet: RAG (pgvector, embeddings, hybrid retrieval).
 `app/workers` is an intentionally empty package that later phases fill — it
 marks the structure from PRD §16, it is not dead code to be deleted.
 
