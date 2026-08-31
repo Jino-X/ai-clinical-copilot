@@ -78,3 +78,15 @@ jobs:
           load: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  database:
+    name: Database (migration + RLS tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shogo82148/actions-setup-postgres@v1
+        with:
+          postgres-version: "18"
+
+      - run: ./scripts/test-db.sh

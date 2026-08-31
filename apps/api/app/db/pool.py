@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import json
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from uuid import UUID
+
 import asyncpg
 
 from app.core.config import Settings
@@ -12,8 +17,18 @@ logger = get_logger(__name__)
 class Database:
     """Owns the asyncpg connection pool for the process lifetime.
 
-    Repositories receive connections from here rather than opening their own,
-    so pool sizing stays a single, tunable decision.
+    Two ways to get a connection, and the difference matters:
+
+    * :meth:`tenant` — runs as the `authenticated` role with the caller's JWT
+      claims set, so **Row Level Security applies**. Use this for anything
+      touching tenant data. A forgotten `WHERE organization_id = ...` then
+      returns nothing instead of leaking another tenant's records.
+    * :meth:`privileged` — runs as the connection's own role, bypassing RLS.
+      Reserved for writes a user must not be able to perform themselves, such
+      as appending to the audit log.
+
+    Defaulting to the privileged connection would make RLS decorative for
+    every backend read. Hence the asymmetry in naming.
     """
 
     def __init__(self, settings: Settings) -> None:
@@ -61,6 +76,32 @@ class Database:
         if self._pool is None:
             raise ServiceUnavailableError("Database is not available")
         return self._pool
+
+    @asynccontextmanager
+    async def tenant(self, user_id: UUID) -> AsyncIterator[asyncpg.Connection]:
+        """A connection with RLS in force for the given user.
+
+        Both settings are transaction-local (`set local`, and `set_config` with
+        `is_local => true`), so they are discarded when the transaction ends
+        and cannot leak onto the next borrower of a pooled connection.
+        """
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                # Claims first: SET ROLE drops the privilege needed to set the
+                # GUC on some configurations.
+                await connection.execute(
+                    "select set_config('request.jwt.claims', $1, true)",
+                    json.dumps({"sub": str(user_id), "role": "authenticated"}),
+                )
+                await connection.execute("set local role authenticated")
+                yield connection
+
+    @asynccontextmanager
+    async def privileged(self) -> AsyncIterator[asyncpg.Connection]:
+        """A connection that bypasses RLS. Justify every use at the call site."""
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                yield connection
 
     async def healthy(self) -> tuple[bool, str | None]:
         if not self.configured:

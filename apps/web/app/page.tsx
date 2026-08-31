@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 import { ApiStatus } from "@/components/system/api-status";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,10 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { checkPublicEnv } from "@/lib/env";
+import { getOptionalUser } from "@/lib/dal";
 
 const PHASES = [
   { name: "Phase 1 — Foundation", done: true },
-  { name: "Phase 2 — Authentication", done: false },
+  { name: "Phase 2 — Authentication", done: true },
   { name: "Phase 3 — Patients", done: false },
   { name: "Phase 4 — Consultation", done: false },
   { name: "Phase 5 — AI documentation", done: false },
@@ -22,8 +25,9 @@ const PHASES = [
   { name: "Phase 9 — Production", done: false },
 ];
 
-export default function Home() {
+export default async function Home() {
   const env = checkPublicEnv();
+  const user = await getOptionalUser();
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-16">
@@ -32,9 +36,27 @@ export default function Home() {
           AI Clinical Copilot
         </h1>
         <p className="text-sm text-muted-foreground">
-          Foundation scaffold. No patient data is stored or processed yet.
+          Clinical documentation assistant. AI-generated notes are drafts
+          until a clinician approves them.
         </p>
       </header>
+
+      {user ? (
+        <div className="flex gap-3">
+          <Button asChild>
+            <Link href="/dashboard">Go to dashboard</Link>
+          </Button>
+        </div>
+      ) : (
+        <div className="flex gap-3">
+          <Button asChild>
+            <Link href="/login">Sign in</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/signup">Create account</Link>
+          </Button>
+        </div>
+      )}
 
       <Card>
         <CardHeader>

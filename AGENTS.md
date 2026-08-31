@@ -6,13 +6,21 @@ organised and how to verify it.
 
 ## Current state
 
-**Phase 1 (Foundation) is complete. Phase 2 (Authentication) is next.**
+**Phase 1 (Foundation) and Phase 2 (Authentication & Organizations) are
+complete. Phase 3 (Patients) is next.**
 
-Delivered: monorepo, Next.js app shell, FastAPI service with config/logging/
-error handling/health probes, the initial SQL migration, Docker, CI.
+Delivered in Phase 1: monorepo, Next.js app shell, FastAPI service with
+config/logging/error handling/health probes, the initial SQL migration,
+Docker, CI.
 
-Not built yet: authentication, organizations, patients, consultations, AI
-providers, RAG, documents. `app/models`, `app/repositories`, `app/services`,
+Delivered in Phase 2: Supabase Auth integration (login, signup, password
+reset, email verification), user profiles, organizations, organization
+memberships with roles (owner/admin/doctor/nurse/staff), role-based
+permissions, audit logging, RLS policies and behavioural tests, backend JWT
+verification (JWKS + legacy symmetric), `proxy.ts` session refresh, protected
+dashboard with organization onboarding and member management.
+
+Not built yet: patients, consultations, AI providers, RAG, documents.
 `app/providers` and `app/workers` are intentionally empty packages that later
 phases fill — they mark the structure from PRD §16, they are not dead code to
 be deleted.

@@ -1,6 +1,7 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -13,7 +14,9 @@ from app.core.middleware import (
     RequestContextMiddleware,
     SecurityHeadersMiddleware,
 )
+from app.core.security import SupabaseTokenVerifier
 from app.db.pool import Database
+from app.services.audit.service import AuditService
 
 logger = get_logger(__name__)
 
@@ -21,8 +24,19 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings: Settings = app.state.settings
+
     database = Database(settings)
     app.state.database = database
+
+    # One shared client so JWKS fetches and Auth server calls reuse
+    # connections instead of completing a TLS handshake per request.
+    http_client = httpx.AsyncClient(
+        timeout=httpx.Timeout(10.0),
+        limits=httpx.Limits(max_connections=50, max_keepalive_connections=10),
+    )
+    app.state.http_client = http_client
+    app.state.token_verifier = SupabaseTokenVerifier(settings, http_client)
+    app.state.audit_service = AuditService(database)
 
     await database.connect()
     logger.info(
@@ -33,6 +47,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         yield
     finally:
+        await http_client.aclose()
         await database.disconnect()
         logger.info("api_stopped")
 

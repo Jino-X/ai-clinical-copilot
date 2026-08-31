@@ -17,7 +17,8 @@
     "api:lint": "cd apps/api && .venv/bin/ruff check .",
     "api:format": "cd apps/api && .venv/bin/ruff format .",
     "api:typecheck": "cd apps/api && .venv/bin/mypy app",
-    "api:test": "cd apps/api && .venv/bin/pytest"
+    "api:test": "cd apps/api && .venv/bin/pytest",
+    "db:test": "./scripts/test-db.sh"
   },
   "engines": {
     "node": ">=20.9.0"

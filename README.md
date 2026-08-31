@@ -7,8 +7,10 @@ without explicit approval.
 See [`PRD.md`](./PRD.md) for the product specification and
 [`AGENTS.md`](./AGENTS.md) for architecture and working conventions.
 
-> **Status: Phase 1 (Foundation) complete.** There is no authentication, no
-> patient data model, and no AI yet. Do not point this at real patient data.
+> **Status: Phase 2 (Authentication & Organizations) complete.** Supabase Auth,
+> multi-tenant organizations, role-based access control, and RLS are in place.
+> There is no patient data model and no AI yet. Do not point this at real patient
+> data.
 
 ## Layout
 
@@ -51,9 +53,10 @@ npm run dev       # web on http://localhost:3000
 npm run api:dev   # api on http://localhost:8000  (creates .venv on first run)
 ```
 
-`http://localhost:3000` shows a configuration and API status page — the
-Phase 1 wiring check. API docs are at `http://localhost:8000/docs` (disabled
-when `ENVIRONMENT=production`).
+`http://localhost:3000` shows a landing page with sign-in/sign-up links.
+After authenticating, you'll reach the dashboard where you can create an
+organization and manage members. API docs are at
+`http://localhost:8000/docs` (disabled when `ENVIRONMENT=production`).
 
 Or with Docker, backend plus a local pgvector database:
 
@@ -68,6 +71,7 @@ re-runnable:
 
 ```bash
 psql "$DATABASE_URL" -f supabase/migrations/20260830000000_initial_foundation.sql
+psql "$DATABASE_URL" -f supabase/migrations/20260830010000_auth_organizations.sql
 ```
 
 With the Supabase CLI, `supabase db push` applies the same directory.
@@ -84,6 +88,8 @@ npm run build         # next build
 npm run api:lint      # ruff
 npm run api:typecheck # mypy (strict)
 npm run api:test      # pytest
+
+./scripts/test-db.sh  # migration + RLS behavioural tests (needs PostgreSQL)
 ```
 
 ## Security

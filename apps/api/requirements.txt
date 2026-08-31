@@ -7,3 +7,8 @@ pydantic-settings==2.15.0
 httpx==0.28.1
 asyncpg==0.31.0
 structlog==26.1.0
+pyjwt==2.13.0
+cryptography==50.0.0
+# Backs pydantic's EmailStr. Email is how a member is invited, so a typo must
+# fail validation rather than create an unreachable membership.
+email-validator==2.3.0
