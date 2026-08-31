@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { SoapNoteEditor } from "@/components/soap-note-editor";
 import { ApiError } from "@/lib/api/client";
 import {
   cancelConsultationApi,
@@ -365,6 +366,15 @@ export default function ConsultationDetailPage() {
       {/* Audio playback */}
       {consultation.audio_storage_path && consultation.status === "completed" && (
         <AudioPlayer consultationId={consultationId} />
+      )}
+
+      {/* AI Documentation: transcription + SOAP note */}
+      {consultation.status !== "cancelled" && (
+        <SoapNoteEditor
+          consultationId={consultationId}
+          hasAudio={!!consultation.audio_storage_path}
+          consultationStatus={consultation.status}
+        />
       )}
 
       {/* State transitions */}

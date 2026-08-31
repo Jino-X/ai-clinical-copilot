@@ -56,6 +56,17 @@ class Settings(BaseSettings):
     # --- HTTP --------------------------------------------------------------
     cors_allow_origins: list[str] = ["http://localhost:3000"]
 
+    # --- AI providers ------------------------------------------------------
+    # Provider selection. Only "openai" is implemented for the MVP (PRD §11).
+    llm_provider: str | None = None
+    transcription_provider: str | None = None
+    embedding_provider: str | None = None
+    # OpenAI API key. Server-side only — never sent to the frontend.
+    openai_api_key: SecretStr | None = None
+    # OpenAI models, overridable for testing or cost control.
+    openai_llm_model: str = "gpt-4o"
+    openai_transcription_model: str = "whisper-1"
+
     @field_validator("cors_allow_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:

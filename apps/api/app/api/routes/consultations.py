@@ -311,6 +311,8 @@ async def confirm_audio_upload(
         content_type=payload.content_type,
         file_size_bytes=payload.file_size_bytes,
     )
+    if consultation is None:
+        raise NotFoundError("Consultation not found")
     await audit.record(
         AuditAction.CONSULTATION_STARTED,
         actor_user_id=context.user.id,

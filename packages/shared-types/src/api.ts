@@ -300,3 +300,68 @@ export type AudioUrlResponse = {
   content_type: string | null;
   size_bytes: number | null;
 };
+
+// --- Phase 5: Clinical notes and AI documentation ---------------------------
+
+export type NoteStatus = "draft" | "in_review" | "approved" | "rejected";
+
+export type NoteVersionSource =
+  | "ai_generated"
+  | "doctor_edited"
+  | "doctor_approved";
+
+export type SoapNoteContent = {
+  subjective: string | null;
+  objective: string | null;
+  assessment: string | null;
+  plan: string | null;
+  follow_up: string | null;
+};
+
+export type SoapNoteResponse = SoapNoteContent & {
+  version: number;
+  source: NoteVersionSource;
+  authored_by: string;
+  edit_note: string | null;
+  created_at: string;
+};
+
+export type ClinicalNoteResponse = {
+  id: string;
+  consultation_id: string;
+  patient_id: string;
+  status: NoteStatus;
+  current_version: number;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
+  latest_version: SoapNoteResponse | null;
+};
+
+export type ClinicalNoteSummary = {
+  id: string;
+  consultation_id: string;
+  patient_id: string;
+  status: NoteStatus;
+  current_version: number;
+  created_at: string;
+};
+
+export type EditNoteRequest = {
+  subjective?: string | null;
+  objective?: string | null;
+  assessment?: string | null;
+  plan?: string | null;
+  follow_up?: string | null;
+  edit_note?: string | null;
+};
+
+export type TranscribeResponse = {
+  transcript_id: string;
+  full_text: string;
+  provider: string;
+  model: string;
+  language: string | null;
+  duration_seconds: number | null;
+};

@@ -60,6 +60,9 @@ class StorageService:
         return self._base_url is not None and self._service_key is not None
 
     def _headers(self) -> dict[str, str]:
+        # configured() is checked before any call that uses headers, so
+        # _service_key is guaranteed non-None here.
+        assert self._service_key is not None
         return {
             "Authorization": f"Bearer {self._service_key}",
             "apikey": self._service_key,

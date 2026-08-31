@@ -46,10 +46,21 @@ plugins = ["pydantic.mypy"]
 module = ["structlog.*", "asyncpg.*", "asgi_lifespan.*"]
 follow_untyped_imports = true
 
-# asyncpg ships no type information, so its calls are untyped. The exception is
-# confined to the one module that talks to it directly.
+# asyncpg ships no type information, so its calls are untyped. The exception
+# is confined to modules that talk to it directly: the pool and the
+# repositories that issue queries through asyncpg connections.
 [[tool.mypy.overrides]]
-module = ["app.db.pool"]
+module = [
+    "app.db.pool",
+    "app.repositories.audit",
+    "app.repositories.profiles",
+    "app.repositories.organizations",
+    "app.repositories.patients",
+    "app.repositories.consultations",
+    "app.repositories.clinical_notes",
+    "app.repositories.transcripts",
+    "app.repositories.ai_generations",
+]
 disallow_untyped_calls = false
 
 [tool.pytest.ini_options]

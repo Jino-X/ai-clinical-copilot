@@ -6,7 +6,7 @@ organised and how to verify it.
 
 ## Current state
 
-**Phases 1–4 are complete. Phase 5 (AI Documentation) is next.**
+**Phases 1–5 are complete. Phase 6 (Patient Intelligence) is next.**
 
 Delivered in Phase 1: monorepo, Next.js app shell, FastAPI service with
 config/logging/error handling/health probes, the initial SQL migration,
@@ -29,16 +29,27 @@ timeline, and new-patient form.
 Delivered in Phase 4: consultation sessions with state machine (scheduled →
 in_progress → completed/cancelled), patient consent (audio recording and AI
 processing, append-only), Supabase Storage integration for secure audio
-upload via signed URLs, transcript and transcript_segments tables (for Phase
-5), RLS policies for all consultation-scoped tables, audit logging for
-consultation started/completed/cancelled, frontend consultation list, detail
-page with consent recording and browser-based audio recording via
-MediaRecorder API, and "Start consultation" button on patient detail page.
+upload via signed URLs, transcript and transcript_segments tables, RLS
+policies for all consultation-scoped tables, audit logging for consultation
+started/completed/cancelled, frontend consultation list, detail page with
+consent recording and browser-based audio recording via MediaRecorder API,
+and "Start consultation" button on patient detail page.
 
-Not built yet: AI providers, transcription, SOAP generation, RAG, documents.
-`app/providers` and `app/workers` are intentionally empty packages that later
-phases fill — they mark the structure from PRD §16, they are not dead code to
-be deleted.
+Delivered in Phase 5: AI provider interfaces (LLM and Transcription) with
+OpenAI implementations, provider factory for config-driven selection, SOAP
+note generation with clinical safety prompts (never invent data, mark
+uncertainty, Assessment/Plan are drafts), clinical note versioning (v1 =
+AI-generated, v2 = doctor-edited, v3 = doctor-approved; approved notes are
+append-only), transcription endpoint (audio → transcript, original never
+overwritten), SOAP generation endpoint (transcript → SOAP draft), doctor
+editing/approval/rejection workflow, ai_generations audit table, RLS policies
+for clinical_notes/clinical_note_versions/ai_generations, frontend SOAP note
+editor with edit/approve/reject UI and version history, transcription trigger
+button on consultation page.
+
+Not built yet: patient intelligence (summary, comparison, Q&A), RAG,
+documents. `app/workers` is an intentionally empty package that later phases
+fill — it marks the structure from PRD §16, it is not dead code to be deleted.
 
 Implement one phase at a time (PRD §26) and verify it before moving on.
 
