@@ -271,9 +271,7 @@ async def remove_member(
     )
 
 
-def _assert_path_matches_context(
-    organization_id: UUID, context: OrganizationDep
-) -> None:
+def _assert_path_matches_context(organization_id: UUID, context: OrganizationDep) -> None:
     """Guard against acting on one organization while authorized for another.
 
     The context is resolved from membership (optionally steered by the

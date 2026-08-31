@@ -45,7 +45,7 @@ def jwks(signing_key: ec.EllipticCurvePrivateKey) -> dict[str, Any]:
 
 
 @pytest.fixture
-def make_token(signing_key: ec.EllipticCurvePrivateKey):  # noqa: ANN201
+def make_token(signing_key: ec.EllipticCurvePrivateKey):
     """Mints access tokens shaped like Supabase's."""
 
     def _make(

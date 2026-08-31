@@ -5,7 +5,7 @@ from uuid import UUID
 import asyncpg
 
 from app.core.permissions import OrganizationRole
-from app.schemas.auth import MembershipSummary, MemberResponse, OrganizationResponse
+from app.schemas.auth import MemberResponse, MembershipSummary, OrganizationResponse
 
 
 class OrganizationRepository:

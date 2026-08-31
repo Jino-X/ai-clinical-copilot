@@ -151,9 +151,7 @@ class SupabaseTokenVerifier:
             raise AuthenticationError("Authentication is not configured")
         return self._decode(token, secret.get_secret_value(), [algorithm])
 
-    def _decode(
-        self, token: str, key: Any, algorithms: list[str]
-    ) -> TokenClaims:
+    def _decode(self, token: str, key: Any, algorithms: list[str]) -> TokenClaims:
         try:
             payload = jwt.decode(
                 token,

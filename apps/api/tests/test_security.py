@@ -82,7 +82,7 @@ async def test_rejects_a_tampered_payload(
     verifier: SupabaseTokenVerifier, make_token: Any
 ) -> None:
     token = make_token()
-    header, payload, signature = token.split(".")
+    header, _payload, signature = token.split(".")
     forged = jwt.utils.base64url_encode(b'{"sub":"11111111-1111-1111-1111-111111111111"}')
 
     with pytest.raises(AuthenticationError):
@@ -124,15 +124,13 @@ async def test_rejects_a_symmetric_token_when_no_secret_is_configured(
     public_key_material = "x" * 40
 
     with pytest.raises(AuthenticationError):
-        await verifier.verify(
-            make_token(algorithm="HS256", key=public_key_material)
-        )
+        await verifier.verify(make_token(algorithm="HS256", key=public_key_material))
 
 
 async def test_accepts_a_symmetric_token_when_the_legacy_secret_is_configured(
     jwks_client: httpx.AsyncClient, make_token: Any
 ) -> None:
-    secret = "legacy-shared-jwt-secret-value-of-sufficient-length"
+    secret = "legacy-shared-jwt-secret-value-of-sufficient-length"  # noqa: S105
     verifier = SupabaseTokenVerifier(
         make_settings(supabase_jwt_secret=secret), jwks_client
     )
@@ -149,11 +147,18 @@ async def test_rejects_a_symmetric_token_signed_with_the_wrong_secret(
     jwks_client: httpx.AsyncClient, make_token: Any
 ) -> None:
     verifier = SupabaseTokenVerifier(
-        make_settings(supabase_jwt_secret="the-real-secret-of-sufficient-length-000"), jwks_client
+        make_settings(  # noqa: S106
+            supabase_jwt_secret="the-real-secret-of-sufficient-length-000"
+        ),
+        jwks_client,
     )
 
     with pytest.raises(AuthenticationError):
-        await verifier.verify(make_token(algorithm="HS256", key="a-guessed-secret-of-sufficient-length-0000000"))
+        await verifier.verify(
+            make_token(
+                algorithm="HS256", key="a-guessed-secret-of-sufficient-length-0000000"
+            )
+        )
 
 
 async def test_rejects_anonymous_sessions(
@@ -193,9 +198,7 @@ async def test_rejects_a_token_with_no_subject(
 async def test_fails_closed_when_supabase_is_not_configured(
     jwks_client: httpx.AsyncClient, make_token: Any
 ) -> None:
-    verifier = SupabaseTokenVerifier(
-        make_settings(supabase_url=None), jwks_client
-    )
+    verifier = SupabaseTokenVerifier(make_settings(supabase_url=None), jwks_client)
 
     with pytest.raises(AuthenticationError, match="not configured"):
         await verifier.verify(make_token())

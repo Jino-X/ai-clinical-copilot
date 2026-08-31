@@ -58,9 +58,7 @@ class CurrentUser:
 
 
 async def get_current_user(
-    credentials: Annotated[
-        HTTPAuthorizationCredentials | None, Depends(_bearer_scheme)
-    ],
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer_scheme)],
     verifier: Annotated[SupabaseTokenVerifier, Depends(get_token_verifier)],
 ) -> CurrentUser:
     if credentials is None or not credentials.credentials:
@@ -171,10 +169,12 @@ async def get_organization_context(
 OrganizationDep = Annotated[OrganizationContext, Depends(get_organization_context)]
 
 
-def requires(permission: Permission) -> Callable[[OrganizationContext], OrganizationContext]:
+def requires(
+    permission: Permission,
+) -> Callable[[OrganizationContext], OrganizationContext]:
     """Route dependency asserting the caller holds a permission.
 
-        @router.get("/members", dependencies=[Depends(requires(Permission.MEMBER_READ))])
+    @router.get("/members", dependencies=[Depends(requires(Permission.MEMBER_READ))])
     """
 
     def dependency(context: OrganizationDep) -> OrganizationContext:

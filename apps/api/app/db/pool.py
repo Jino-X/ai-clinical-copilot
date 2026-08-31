@@ -85,23 +85,21 @@ class Database:
         `is_local => true`), so they are discarded when the transaction ends
         and cannot leak onto the next borrower of a pooled connection.
         """
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                # Claims first: SET ROLE drops the privilege needed to set the
-                # GUC on some configurations.
-                await connection.execute(
-                    "select set_config('request.jwt.claims', $1, true)",
-                    json.dumps({"sub": str(user_id), "role": "authenticated"}),
-                )
-                await connection.execute("set local role authenticated")
-                yield connection
+        async with self.pool.acquire() as connection, connection.transaction():
+            # Claims first: SET ROLE drops the privilege needed to set the
+            # GUC on some configurations.
+            await connection.execute(
+                "select set_config('request.jwt.claims', $1, true)",
+                json.dumps({"sub": str(user_id), "role": "authenticated"}),
+            )
+            await connection.execute("set local role authenticated")
+            yield connection
 
     @asynccontextmanager
     async def privileged(self) -> AsyncIterator[asyncpg.Connection]:
         """A connection that bypasses RLS. Justify every use at the call site."""
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                yield connection
+        async with self.pool.acquire() as connection, connection.transaction():
+            yield connection
 
     async def healthy(self) -> tuple[bool, str | None]:
         if not self.configured:

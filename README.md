@@ -7,10 +7,10 @@ without explicit approval.
 See [`PRD.md`](./PRD.md) for the product specification and
 [`AGENTS.md`](./AGENTS.md) for architecture and working conventions.
 
-> **Status: Phase 2 (Authentication & Organizations) complete.** Supabase Auth,
-> multi-tenant organizations, role-based access control, and RLS are in place.
-> There is no patient data model and no AI yet. Do not point this at real patient
-> data.
+> **Status: Phase 3 (Patients) complete.** Supabase Auth, multi-tenant
+> organizations, role-based access control, patient CRUD with search, medical
+> history, and timeline are in place. There is no consultation or AI yet. Do not
+> point this at real patient data.
 
 ## Layout
 
@@ -55,7 +55,7 @@ npm run api:dev   # api on http://localhost:8000  (creates .venv on first run)
 
 `http://localhost:3000` shows a landing page with sign-in/sign-up links.
 After authenticating, you'll reach the dashboard where you can create an
-organization and manage members. API docs are at
+organization, manage members, and search/create patients. API docs are at
 `http://localhost:8000/docs` (disabled when `ENVIRONMENT=production`).
 
 Or with Docker, backend plus a local pgvector database:
@@ -72,6 +72,7 @@ re-runnable:
 ```bash
 psql "$DATABASE_URL" -f supabase/migrations/20260830000000_initial_foundation.sql
 psql "$DATABASE_URL" -f supabase/migrations/20260830010000_auth_organizations.sql
+psql "$DATABASE_URL" -f supabase/migrations/20260830020000_patients.sql
 ```
 
 With the Supabase CLI, `supabase db push` applies the same directory.

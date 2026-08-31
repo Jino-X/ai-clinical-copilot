@@ -32,6 +32,9 @@ known-first-party = ["app"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]  # assert is the point of a test
+# Repositories build SQL with f-strings for column lists only; all user
+# input goes through $1/$2 parameterization. S608 is a false positive here.
+"app/repositories/*.py" = ["S608"]
 
 [tool.mypy]
 python_version = "3.13"

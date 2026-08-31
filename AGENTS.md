@@ -6,8 +6,7 @@ organised and how to verify it.
 
 ## Current state
 
-**Phase 1 (Foundation) and Phase 2 (Authentication & Organizations) are
-complete. Phase 3 (Patients) is next.**
+**Phases 1–3 are complete. Phase 4 (Consultation) is next.**
 
 Delivered in Phase 1: monorepo, Next.js app shell, FastAPI service with
 config/logging/error handling/health probes, the initial SQL migration,
@@ -20,7 +19,14 @@ permissions, audit logging, RLS policies and behavioural tests, backend JWT
 verification (JWKS + legacy symmetric), `proxy.ts` session refresh, protected
 dashboard with organization onboarding and member management.
 
-Not built yet: patients, consultations, AI providers, RAG, documents.
+Delivered in Phase 3: patient CRUD with trigram search, patient contacts,
+medical history (conditions, medications, allergies), patient timeline with
+trigger-generated events, audit logging for patient views/creates/updates,
+RLS policies for all patient-scoped tables, frontend patient list/search,
+patient detail page with tabbed overview/conditions/medications/allergies/
+timeline, and new-patient form.
+
+Not built yet: consultations, AI providers, RAG, documents.
 `app/providers` and `app/workers` are intentionally empty packages that later
 phases fill — they mark the structure from PRD §16, they are not dead code to
 be deleted.

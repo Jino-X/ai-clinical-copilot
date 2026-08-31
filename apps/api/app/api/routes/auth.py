@@ -19,9 +19,7 @@ _organizations = OrganizationRepository()
 
 
 @router.get("/me", response_model=CurrentUserResponse, summary="Current user")
-async def me(
-    user: CurrentUserDep, connection: TenantConnection
-) -> CurrentUserResponse:
+async def me(user: CurrentUserDep, connection: TenantConnection) -> CurrentUserResponse:
     """Identity, memberships and effective permissions.
 
     The frontend uses this to decide what to render. It is a convenience, not

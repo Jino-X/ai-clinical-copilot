@@ -89,3 +89,137 @@ export type MemberResponse = {
   status: string;
   created_at: string;
 };
+
+// --- Phase 3: Patients -------------------------------------------------------
+
+export type Sex = "male" | "female" | "other" | "unknown";
+
+export type ConditionStatus = "active" | "resolved" | "chronic" | "recurrence";
+
+export type MedicationStatus =
+  | "active"
+  | "completed"
+  | "discontinued"
+  | "on_hold";
+
+export type AllergySeverity = "mild" | "moderate" | "severe";
+
+export type TimelineEventType =
+  | "consultation"
+  | "diagnosis"
+  | "medication"
+  | "lab_report"
+  | "document"
+  | "procedure"
+  | "follow_up"
+  | "allergy"
+  | "condition";
+
+export type PatientSummary = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth: string | null;
+  sex: Sex;
+  phone: string | null;
+  email: string | null;
+};
+
+export type PatientResponse = {
+  id: string;
+  organization_id: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth: string | null;
+  sex: Sex;
+  national_id: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CreatePatientRequest = {
+  first_name: string;
+  last_name: string;
+  date_of_birth?: string | null;
+  sex?: Sex;
+  national_id?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  notes?: string | null;
+};
+
+export type UpdatePatientRequest = Partial<CreatePatientRequest>;
+
+export type PatientContactResponse = {
+  id: string;
+  patient_id: string;
+  name: string;
+  relationship: string | null;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
+};
+
+export type ConditionResponse = {
+  id: string;
+  patient_id: string;
+  name: string;
+  status: ConditionStatus;
+  onset_date: string | null;
+  resolved_date: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export type MedicationResponse = {
+  id: string;
+  patient_id: string;
+  name: string;
+  dosage: string | null;
+  frequency: string | null;
+  route: string | null;
+  status: MedicationStatus;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export type AllergyResponse = {
+  id: string;
+  patient_id: string;
+  allergen: string;
+  reaction: string | null;
+  severity: AllergySeverity | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export type TimelineEventResponse = {
+  id: string;
+  patient_id: string;
+  event_type: TimelineEventType;
+  event_date: string;
+  title: string;
+  description: string | null;
+  source_type: string | null;
+  source_id: string | null;
+  created_at: string;
+};
