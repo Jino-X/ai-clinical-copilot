@@ -3,6 +3,7 @@
 import type {
   AllergyResponse,
   ConditionResponse,
+  ConsultationSummary,
   CreatePatientRequest,
   MedicationResponse,
   PatientContactResponse,
@@ -201,6 +202,16 @@ export async function listTimelineApi(
   const accessToken = await getAccessToken();
   return api.get<TimelineEventResponse[]>(
     `/patients/${patientId}/timeline`,
+    { accessToken },
+  );
+}
+
+export async function listPatientConsultationsApi(
+  patientId: string,
+): Promise<ConsultationSummary[]> {
+  const accessToken = await getAccessToken();
+  return api.get<ConsultationSummary[]>(
+    `/patients/${patientId}/consultations`,
     { accessToken },
   );
 }

@@ -5,6 +5,7 @@ from app.api.routes import (
     clinical_notes,
     consultations,
     health,
+    intelligence,
     organizations,
     patients,
 )
@@ -17,3 +18,4 @@ api_router.include_router(organizations.router)
 api_router.include_router(patients.router)
 api_router.include_router(consultations.router)
 api_router.include_router(clinical_notes.router)
+api_router.include_router(intelligence.router)

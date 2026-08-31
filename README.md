@@ -7,12 +7,13 @@ without explicit approval.
 See [`PRD.md`](./PRD.md) for the product specification and
 [`AGENTS.md`](./AGENTS.md) for architecture and working conventions.
 
-> **Status: Phase 5 (AI Documentation) complete.** Supabase Auth, multi-tenant
-> organizations, role-based access control, patient CRUD with search, medical
-> history, timeline, consultation sessions with consent and audio recording,
-> AI-powered transcription and SOAP note generation with doctor
-> editing/approval/versioning are in place. There is no patient intelligence
-> (summary, comparison, Q&A) yet. Do not point this at real patient data.
+> **Status: Phase 6 (Patient Intelligence) complete.** Supabase Auth,
+> multi-tenant organizations, role-based access control, patient CRUD with
+> search, medical history, timeline, consultation sessions with consent and
+> audio recording, AI-powered transcription and SOAP note generation with
+> doctor editing/approval/versioning, and AI patient intelligence (summary,
+> visit comparison, history Q&A) are in place. There is no document management
+> yet. Do not point this at real patient data.
 
 ## Layout
 
@@ -58,9 +59,10 @@ npm run api:dev   # api on http://localhost:8000  (creates .venv on first run)
 `http://localhost:3000` shows a landing page with sign-in/sign-up links.
 After authenticating, you'll reach the dashboard where you can create an
 organization, manage members, search/create patients, start consultations
-with audio recording and patient consent, transcribe audio, and generate/edit/
-approve SOAP notes. API docs are at `http://localhost:8000/docs` (disabled
-when `ENVIRONMENT=production`).
+with audio recording and patient consent, transcribe audio, generate/edit/
+approve SOAP notes, and use AI patient intelligence (summary, visit
+comparison, history Q&A). API docs are at `http://localhost:8000/docs`
+(disabled when `ENVIRONMENT=production`).
 
 To enable AI features, set these in `apps/api/.env`:
 

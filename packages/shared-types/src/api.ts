@@ -365,3 +365,37 @@ export type TranscribeResponse = {
   language: string | null;
   duration_seconds: number | null;
 };
+
+// --- Phase 6: Patient Intelligence -------------------------------------------
+
+export type PatientSummaryResponse = {
+  summary: string;
+  key_conditions: string[];
+  key_medications: string[];
+  key_allergies: string[];
+  recent_activity: string | null;
+  source_references: string[];
+  provider: string;
+  model: string;
+};
+
+export type VisitComparisonResponse = {
+  new_symptoms: string[];
+  changed_symptoms: string[];
+  improved_symptoms: string[];
+  worsened_symptoms: string[];
+  new_medications: string[];
+  medication_changes: string[];
+  important_changes: string[];
+  narrative: string;
+  source_references: string[];
+  provider: string;
+  model: string;
+};
+
+export type PatientQuestionResponse = {
+  answer: string;
+  source_references: string[];
+  provider: string;
+  model: string;
+};

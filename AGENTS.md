@@ -6,7 +6,7 @@ organised and how to verify it.
 
 ## Current state
 
-**Phases 1–5 are complete. Phase 6 (Patient Intelligence) is next.**
+**Phases 1–6 are complete. Phase 7 (Documents) is next.**
 
 Delivered in Phase 1: monorepo, Next.js app shell, FastAPI service with
 config/logging/error handling/health probes, the initial SQL migration,
@@ -47,9 +47,18 @@ for clinical_notes/clinical_note_versions/ai_generations, frontend SOAP note
 editor with edit/approve/reject UI and version history, transcription trigger
 button on consultation page.
 
-Not built yet: patient intelligence (summary, comparison, Q&A), RAG,
-documents. `app/workers` is an intentionally empty package that later phases
-fill — it marks the structure from PRD §16, it is not dead code to be deleted.
+Delivered in Phase 6: patient intelligence — AI-generated patient summary
+(conditions, medications, allergies, recent activity, source references),
+visit comparison (new/changed/improved/worsened symptoms, medication changes,
+important changes — never infers without supporting data, PRD §7), patient
+history Q&A (answers only from authorized records, provides source references,
+PRD §8), PatientContextBuilder aggregating patient data into LLM context,
+patient consultations list endpoint, frontend PatientIntelligence component
+with three tabs (Summary, Compare, Ask) integrated into patient detail page.
+
+Not built yet: documents (upload, OCR, extraction), RAG.
+`app/workers` is an intentionally empty package that later phases fill — it
+marks the structure from PRD §16, it is not dead code to be deleted.
 
 Implement one phase at a time (PRD §26) and verify it before moving on.
 

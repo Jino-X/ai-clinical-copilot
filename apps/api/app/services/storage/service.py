@@ -62,7 +62,8 @@ class StorageService:
     def _headers(self) -> dict[str, str]:
         # configured() is checked before any call that uses headers, so
         # _service_key is guaranteed non-None here.
-        assert self._service_key is not None
+        if self._service_key is None:  # pragma: no cover
+            raise ServiceUnavailableError("Storage is not configured")
         return {
             "Authorization": f"Bearer {self._service_key}",
             "apikey": self._service_key,

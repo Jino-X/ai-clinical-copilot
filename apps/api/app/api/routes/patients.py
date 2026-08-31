@@ -6,7 +6,9 @@ from fastapi import APIRouter, Query, Request, status
 from app.api.deps import AuditDep, OrganizationDep, TenantConnection
 from app.core.errors import NotFoundError
 from app.core.permissions import Permission
+from app.repositories.consultations import ConsultationRepository
 from app.repositories.patients import PatientRepository
+from app.schemas.consultations import ConsultationSummary
 from app.schemas.patients import (
     AllergyResponse,
     ConditionResponse,
@@ -27,6 +29,7 @@ from app.services.audit.service import AuditAction
 router = APIRouter(prefix="/patients", tags=["patients"])
 
 _repo = PatientRepository()
+_consultation_repo = ConsultationRepository()
 
 
 def _require_patient_access(context: OrganizationDep) -> None:
@@ -426,3 +429,19 @@ async def get_timeline(
 ) -> list[TimelineEventResponse]:
     _require_patient_access(context)
     return await _repo.list_timeline(connection, patient_id=patient_id)
+
+
+@router.get(
+    "/{patient_id}/consultations",
+    response_model=list[ConsultationSummary],
+    summary="List consultations for a patient",
+)
+async def list_patient_consultations(
+    patient_id: UUID,
+    context: OrganizationDep,
+    connection: TenantConnection,
+) -> list[ConsultationSummary]:
+    _require_patient_access(context)
+    return await _consultation_repo.list_for_patient(
+        connection, patient_id=patient_id
+    )

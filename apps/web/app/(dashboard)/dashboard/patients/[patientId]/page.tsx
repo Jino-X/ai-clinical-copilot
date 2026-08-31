@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { PatientIntelligence } from "@/components/patient-intelligence";
 import { ApiError } from "@/lib/api/client";
 import {
   addAllergyApi,
@@ -29,6 +30,7 @@ import {
   listAllergiesApi,
   listConditionsApi,
   listMedicationsApi,
+  listPatientConsultationsApi,
   listTimelineApi,
   removeAllergyApi,
   removeConditionApi,
@@ -88,6 +90,11 @@ export default function PatientDetailPage() {
   const { data: timeline = [] } = useQuery({
     queryKey: ["patients", patientId, "timeline"],
     queryFn: () => listTimelineApi(patientId),
+  });
+
+  const { data: consultations = [] } = useQuery({
+    queryKey: ["patients", patientId, "consultations"],
+    queryFn: () => listPatientConsultationsApi(patientId),
   });
 
   // --- Mutations ---
@@ -246,6 +253,7 @@ export default function PatientDetailPage() {
           <TabsTrigger value="timeline">
             Timeline ({timeline.length})
           </TabsTrigger>
+          <TabsTrigger value="intelligence">Intelligence</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
@@ -569,6 +577,14 @@ export default function PatientDetailPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Intelligence */}
+        <TabsContent value="intelligence" className="space-y-4">
+          <PatientIntelligence
+            patientId={patientId}
+            consultationIds={consultations.map((c) => c.id)}
+          />
         </TabsContent>
       </Tabs>
     </div>
