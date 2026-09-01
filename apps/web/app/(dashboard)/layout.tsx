@@ -1,9 +1,7 @@
-import Link from "next/link";
-import { Stethoscope } from "lucide-react";
-
 import { getCurrentUser } from "@/lib/dal";
 import { getCurrentUserApi } from "@/lib/api/auth";
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { Sidebar } from "@/components/layout/sidebar";
+import { Header } from "@/components/layout/header";
 
 /**
  * Protected dashboard layout.
@@ -39,62 +37,13 @@ export default async function DashboardLayout({
   const displayName = profile?.full_name || profile?.email || user.email;
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <header className="flex h-14 items-center justify-between border-b px-6">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 font-semibold"
-          >
-            <Stethoscope className="size-4" aria-hidden />
-            Clinical Copilot
-          </Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">{displayName}</span>
-          <SignOutButton />
-        </div>
-      </header>
-      <div className="flex flex-1">
-        {hasOrganizations && (
-          <nav className="hidden w-56 border-r p-4 md:block">
-            <ul className="space-y-1 text-sm">
-              <li>
-                <Link
-                  href="/dashboard"
-                  className="block rounded-md px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                  Overview
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/dashboard/patients"
-                  className="block rounded-md px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                  Patients
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/dashboard/consultations"
-                  className="block rounded-md px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                  Consultations
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/dashboard/organization"
-                  className="block rounded-md px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                  Organization
-                </Link>
-              </li>
-            </ul>
-          </nav>
-        )}
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+    <div className="flex min-h-svh bg-background">
+      {hasOrganizations && <Sidebar />}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Header displayName={displayName} />
+        <main className="flex-1 overflow-auto">
+          <div className="mx-auto max-w-6xl p-6 lg:p-8">{children}</div>
+        </main>
       </div>
     </div>
   );

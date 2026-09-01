@@ -38,6 +38,12 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-info: var(--info);
+    --color-info-foreground: var(--info-foreground);
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -47,83 +53,244 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ─── Clinical Theme — Light ─────────────────────────────────────── */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
+    /* Base: soft clinical white with subtle blue tint */
+    --background: oklch(0.985 0.005 240);
+    --foreground: oklch(0.20 0.02 250);
+
+    /* Cards: pure white for contrast against tinted background */
     --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
+    --card-foreground: oklch(0.20 0.02 250);
+
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --popover-foreground: oklch(0.20 0.02 250);
+
+    /* Primary: medical teal-blue */
+    --primary: oklch(0.52 0.14 230);
+    --primary-foreground: oklch(0.99 0 0);
+
+    /* Secondary: light teal tint */
+    --secondary: oklch(0.95 0.02 230);
+    --secondary-foreground: oklch(0.30 0.05 230);
+
+    /* Muted: soft gray-blue */
+    --muted: oklch(0.96 0.008 240);
+    --muted-foreground: oklch(0.52 0.02 250);
+
+    /* Accent: light teal */
+    --accent: oklch(0.93 0.03 230);
+    --accent-foreground: oklch(0.30 0.06 230);
+
+    /* Destructive: clinical red */
+    --destructive: oklch(0.58 0.22 25);
+    --border: oklch(0.90 0.01 240);
+    --input: oklch(0.90 0.01 240);
+    --ring: oklch(0.52 0.14 230);
+
+    /* Clinical status colors */
+    --success: oklch(0.60 0.14 155);
+    --success-foreground: oklch(0.99 0 0);
+    --warning: oklch(0.75 0.15 75);
+    --warning-foreground: oklch(0.25 0.02 75);
+    --info: oklch(0.60 0.12 230);
+    --info-foreground: oklch(0.99 0 0);
+
+    /* Chart colors: clinical palette */
+    --chart-1: oklch(0.52 0.14 230);
+    --chart-2: oklch(0.60 0.14 155);
+    --chart-3: oklch(0.75 0.15 75);
+    --chart-4: oklch(0.58 0.22 25);
+    --chart-5: oklch(0.65 0.10 290);
+
+    --radius: 0.75rem;
+
+    /* Sidebar: deep clinical navy */
+    --sidebar: oklch(0.22 0.03 250);
+    --sidebar-foreground: oklch(0.92 0.01 240);
+    --sidebar-primary: oklch(0.52 0.14 230);
+    --sidebar-primary-foreground: oklch(0.99 0 0);
+    --sidebar-accent: oklch(0.28 0.03 250);
+    --sidebar-accent-foreground: oklch(0.95 0.01 240);
+    --sidebar-border: oklch(0.30 0.03 250);
+    --sidebar-ring: oklch(0.52 0.14 230);
 }
 
+/* ─── Clinical Theme — Dark ──────────────────────────────────────── */
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
+    --background: oklch(0.16 0.02 250);
+    --foreground: oklch(0.93 0.01 240);
+
+    --card: oklch(0.21 0.02 250);
+    --card-foreground: oklch(0.93 0.01 240);
+
+    --popover: oklch(0.21 0.02 250);
+    --popover-foreground: oklch(0.93 0.01 240);
+
+    --primary: oklch(0.62 0.14 230);
+    --primary-foreground: oklch(0.15 0.02 250);
+
+    --secondary: oklch(0.26 0.03 250);
+    --secondary-foreground: oklch(0.93 0.01 240);
+
+    --muted: oklch(0.26 0.02 250);
+    --muted-foreground: oklch(0.68 0.02 240);
+
+    --accent: oklch(0.30 0.04 230);
+    --accent-foreground: oklch(0.93 0.01 240);
+
+    --destructive: oklch(0.68 0.20 25);
     --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --input: oklch(1 0 0 / 12%);
+    --ring: oklch(0.62 0.14 230);
+
+    --success: oklch(0.65 0.14 155);
+    --success-foreground: oklch(0.15 0.02 250);
+    --warning: oklch(0.78 0.15 75);
+    --warning-foreground: oklch(0.20 0.02 75);
+    --info: oklch(0.65 0.12 230);
+    --info-foreground: oklch(0.15 0.02 250);
+
+    --chart-1: oklch(0.62 0.14 230);
+    --chart-2: oklch(0.65 0.14 155);
+    --chart-3: oklch(0.78 0.15 75);
+    --chart-4: oklch(0.68 0.20 25);
+    --chart-5: oklch(0.70 0.10 290);
+
+    --sidebar: oklch(0.14 0.02 250);
+    --sidebar-foreground: oklch(0.90 0.01 240);
+    --sidebar-primary: oklch(0.62 0.14 230);
+    --sidebar-primary-foreground: oklch(0.99 0 0);
+    --sidebar-accent: oklch(0.20 0.03 250);
+    --sidebar-accent-foreground: oklch(0.93 0.01 240);
+    --sidebar-border: oklch(0.25 0.02 250);
+    --sidebar-ring: oklch(0.62 0.14 230);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
   body {
-    @apply bg-background text-foreground;
-    }
+    @apply bg-background text-foreground antialiased;
+  }
   html {
-    @apply font-sans;
-    }
+    @apply font-sans scroll-smooth;
+  }
+}
+
+/* ─── Custom Animations ──────────────────────────────────────────── */
+@layer utilities {
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in-down {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes recording-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
+  .animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
+  .animate-fade-in-down { animation: fade-in-down 0.5s ease-out forwards; }
+  .animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
+  .animate-slide-in-right { animation: slide-in-right 0.4s ease-out forwards; }
+  .animate-recording-pulse { animation: recording-pulse 1.5s ease-in-out infinite; }
+
+  .pulse-ring {
+    animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  }
+
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--muted) 25%,
+      var(--accent) 50%,
+      var(--muted) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Staggered animation delays */
+  .delay-75 { animation-delay: 75ms; }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-500 { animation-delay: 500ms; }
+  .delay-700 { animation-delay: 700ms; }
+
+  /* Glassmorphism effect for cards */
+  .glass {
+    background: color-mix(in oklch, var(--card) 80%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    background: linear-gradient(135deg, var(--primary), oklch(0.60 0.14 190));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px oklch(0.52 0.14 230 / 0.12);
+  }
+
+  /* Smooth transitions for interactive elements */
+  .transition-smooth {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* ─── Scrollbar Styling ──────────────────────────────────────────── */
+@layer base {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground);
+    border-radius: 4px;
+    opacity: 0.3;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+    opacity: 0.5;
+  }
 }

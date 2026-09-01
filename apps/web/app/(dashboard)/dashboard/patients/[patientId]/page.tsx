@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { PatientAvatar } from "@/components/clinical";
 import { PatientIntelligence } from "@/components/patient-intelligence";
 import { PatientDocuments } from "@/components/patient-documents";
 import { ApiError } from "@/lib/api/client";
@@ -196,7 +197,7 @@ export default function PatientDetailPage() {
   if (isLoading || !patient) {
     return (
       <div className="mx-auto max-w-4xl">
-        <p className="text-sm text-muted-foreground">Loading patient…</p>
+        <p className="text-sm text-muted-foreground animate-fade-in">Loading patient…</p>
       </div>
     );
   }
@@ -221,16 +222,30 @@ export default function PatientDetailPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {patient.first_name} {patient.last_name}
-          </h1>
-          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-            {patient.date_of_birth && <span>DOB: {patient.date_of_birth}</span>}
-            <span className="capitalize">· {patient.sex}</span>
-            {patient.phone && <span>· {patient.phone}</span>}
-            {patient.email && <span>· {patient.email}</span>}
+      <div className="flex animate-fade-in-down items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <PatientAvatar
+            firstName={patient.first_name}
+            lastName={patient.last_name}
+            sex={patient.sex}
+            size="lg"
+          />
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-bold tracking-tight">
+              {patient.first_name} {patient.last_name}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              {patient.date_of_birth && (
+                <span className="rounded-md bg-muted px-2 py-0.5 text-xs">
+                  DOB: {patient.date_of_birth}
+                </span>
+              )}
+              <span className="rounded-md bg-muted px-2 py-0.5 text-xs capitalize">
+                {patient.sex}
+              </span>
+              {patient.phone && <span className="text-xs">· {patient.phone}</span>}
+              {patient.email && <span className="text-xs">· {patient.email}</span>}
+            </div>
           </div>
         </div>
         <Button onClick={startConsultation} disabled={startingConsultation}>

@@ -2,27 +2,23 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Stethoscope, Clock, CheckCircle, XCircle } from "lucide-react";
+import {
+  Stethoscope,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Calendar,
+} from "lucide-react";
 import type { ConsultationSummary } from "@clinical-copilot/shared-types";
 
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+  PageHeader,
+  StatusBadge,
+  EmptyState,
+  ListSkeleton,
+} from "@/components/clinical";
 import { listConsultationsApi } from "@/lib/api/consultations";
-
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
-  scheduled: { label: "Scheduled", variant: "secondary" },
-  in_progress: { label: "In Progress", variant: "default" },
-  completed: { label: "Completed", variant: "outline" },
-  cancelled: { label: "Cancelled", variant: "destructive" },
-};
 
 export default function ConsultationsPage() {
   const { data: consultations = [], isLoading } = useQuery({
@@ -31,81 +27,103 @@ export default function ConsultationsPage() {
   });
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Consultations</h1>
-        <p className="text-sm text-muted-foreground">
-          All consultations in this organization.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Consultations"
+        description="All consultations in this organization"
+        icon={Stethoscope}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">
-            {consultations.length} consultation{consultations.length !== 1 && "s"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1">
-          {isLoading ? (
-            <p className="py-4 text-sm text-muted-foreground">Loading…</p>
-          ) : consultations.length === 0 ? (
-            <div className="py-8 text-center">
-              <Stethoscope
-                className="mx-auto size-8 text-muted-foreground"
-                aria-hidden
+      <Card className="border-border/60">
+        <CardContent className="p-0">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+            <p className="text-sm font-medium">
+              {consultations.length} consultation{consultations.length !== 1 && "s"}
+            </p>
+          </div>
+
+          {/* List */}
+          <div className="p-2">
+            {isLoading ? (
+              <div className="p-3">
+                <ListSkeleton count={4} />
+              </div>
+            ) : consultations.length === 0 ? (
+              <EmptyState
+                icon={Stethoscope}
+                title="No consultations yet"
+                description="Start one from a patient page to begin AI documentation."
               />
-              <p className="mt-2 text-sm text-muted-foreground">
-                No consultations yet. Start one from a patient page.
-              </p>
-            </div>
-          ) : (
-            consultations.map((c) => (
-              <ConsultationRow key={c.id} consultation={c} />
-            ))
-          )}
+            ) : (
+              <div className="space-y-0.5">
+                {consultations.map((c, i) => (
+                  <ConsultationRow key={c.id} consultation={c} index={i} />
+                ))}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
 
-function ConsultationRow({ consultation }: { consultation: ConsultationSummary }) {
-  const config = STATUS_CONFIG[consultation.status] ?? STATUS_CONFIG.scheduled;
+function ConsultationRow({
+  consultation,
+  index,
+}: {
+  consultation: ConsultationSummary;
+  index: number;
+}) {
   const duration = consultation.duration_seconds
     ? formatDuration(consultation.duration_seconds)
     : null;
 
+  const Icon =
+    consultation.status === "completed"
+      ? CheckCircle
+      : consultation.status === "cancelled"
+        ? XCircle
+        : Stethoscope;
+
+  const iconColor =
+    consultation.status === "completed"
+      ? "bg-success/10 text-success"
+      : consultation.status === "cancelled"
+        ? "bg-destructive/10 text-destructive"
+        : consultation.status === "in_progress"
+          ? "bg-primary/10 text-primary"
+          : "bg-info/10 text-info";
+
   return (
     <Link
       href={`/dashboard/consultations/${consultation.id}`}
-      className="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-muted"
+      className="group flex animate-fade-in-up items-center gap-3 rounded-lg px-3 py-3 opacity-0 transition-smooth hover:bg-accent/50"
+      style={{ animationDelay: `${index * 40}ms` }}
     >
-      <div className="flex size-8 items-center justify-center rounded-full bg-muted">
-        {consultation.status === "completed" ? (
-          <CheckCircle className="size-4 text-muted-foreground" aria-hidden />
-        ) : consultation.status === "cancelled" ? (
-          <XCircle className="size-4 text-muted-foreground" aria-hidden />
-        ) : (
-          <Stethoscope
-            className="size-4 text-muted-foreground"
-            aria-hidden
-          />
-        )}
+      <div
+        className={`flex size-10 shrink-0 items-center justify-center rounded-xl transition-smooth group-hover:scale-110 ${iconColor}`}
+      >
+        <Icon className="size-4" aria-hidden />
       </div>
-      <div className="flex-1 space-y-0.5">
-        <p className="text-sm font-medium">
+      <div className="min-w-0 flex-1 space-y-0.5">
+        <p className="truncate text-sm font-medium group-hover:text-primary transition-smooth">
           {consultation.chief_complaint || "Consultation"}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Calendar className="size-3" aria-hidden />
           {new Date(consultation.created_at).toLocaleDateString()}
           {duration && (
             <>
-              <Clock className="ml-2 inline size-3" aria-hidden /> {duration}
+              <span className="text-border">·</span>
+              <Clock className="size-3" aria-hidden />
+              {duration}
             </>
           )}
-        </p>
+        </div>
       </div>
-      <Badge variant={config.variant}>{config.label}</Badge>
+      <StatusBadge status={consultation.status} />
     </Link>
   );
 }

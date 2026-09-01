@@ -13,10 +13,10 @@ import {
   ArrowLeft,
   ShieldCheck,
   ShieldAlert,
+  Calendar,
 } from "lucide-react";
 import type {
   ConsentType,
-  ConsultationStatus,
 } from "@clinical-copilot/shared-types";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import {
 import { getPublicEnv } from "@/lib/env";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { StatusBadge } from "@/components/clinical";
 import { SoapNoteEditor } from "@/components/soap-note-editor";
 import { AiPipeline } from "@/components/ai-pipeline";
 import { ApiError } from "@/lib/api/client";
@@ -43,16 +44,6 @@ import {
   listConsentsApi,
   startConsultationApi,
 } from "@/lib/api/consultations";
-
-const STATUS_CONFIG: Record<
-  ConsultationStatus,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
-  scheduled: { label: "Scheduled", variant: "secondary" },
-  in_progress: { label: "In Progress", variant: "default" },
-  completed: { label: "Completed", variant: "outline" },
-  cancelled: { label: "Cancelled", variant: "destructive" },
-};
 
 export default function ConsultationDetailPage() {
   const params = useParams<{ consultationId: string }>();
@@ -237,12 +228,14 @@ export default function ConsultationDetailPage() {
   if (isLoading || !consultation) {
     return (
       <div className="mx-auto max-w-3xl">
-        <p className="text-sm text-muted-foreground">Loading consultation…</p>
+        <div className="flex animate-fade-in items-center gap-3 py-12">
+          <div className="size-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground">Loading consultation…</p>
+        </div>
       </div>
     );
   }
 
-  const statusConfig = STATUS_CONFIG[consultation.status];
   const canRecord =
     consultation.status === "scheduled" || consultation.status === "in_progress";
   const canComplete = consultation.status === "in_progress";
@@ -251,40 +244,43 @@ export default function ConsultationDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex animate-fade-in-down items-center gap-3">
         <Button
           variant="ghost"
           size="icon-sm"
           onClick={() => router.back()}
           aria-label="Back"
+          className="transition-smooth hover:bg-accent"
         >
           <ArrowLeft className="size-4" aria-hidden />
         </Button>
-        <div className="flex-1 space-y-1">
+        <div className="flex-1 space-y-1.5">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight">
               {consultation.chief_complaint || "Consultation"}
             </h1>
-            <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+            <StatusBadge status={consultation.status} />
           </div>
-          <p className="text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Calendar className="size-3.5" aria-hidden />
             {new Date(consultation.created_at).toLocaleString()}
             {consultation.duration_seconds && (
-              <span>
-                {" "}
-                · {Math.floor(consultation.duration_seconds / 60)}m
+              <span className="rounded-md bg-muted px-2 py-0.5 text-xs">
+                {Math.floor(consultation.duration_seconds / 60)}m
               </span>
             )}
-          </p>
+          </div>
         </div>
       </div>
 
       {/* Consent section */}
       {canRecord && (
-        <Card>
+        <Card className="animate-fade-in-up border-border/60 opacity-0" style={{ animationDelay: "100ms" }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldCheck className="size-4" aria-hidden />
+              <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <ShieldCheck className="size-4" aria-hidden />
+              </div>
               Patient consent
             </CardTitle>
             <CardDescription>
@@ -313,10 +309,12 @@ export default function ConsultationDetailPage() {
 
       {/* Recording section */}
       {canRecord && (
-        <Card>
+        <Card className="animate-fade-in-up border-border/60 opacity-0" style={{ animationDelay: "150ms" }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Mic className="size-4" aria-hidden />
+              <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Mic className="size-4" aria-hidden />
+              </div>
               Recording
             </CardTitle>
             <CardDescription>
@@ -326,18 +324,19 @@ export default function ConsultationDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {!hasAudioConsent && (
-              <div className="flex items-center gap-2 rounded-md bg-muted p-3 text-sm">
-                <ShieldAlert className="size-4 text-muted-foreground" aria-hidden />
-                <span className="text-muted-foreground">
+              <div className="flex items-center gap-2 rounded-lg bg-warning/10 p-3 text-sm">
+                <ShieldAlert className="size-4 text-warning" aria-hidden />
+                <span className="text-warning-foreground">
                   Audio recording consent is required before recording.
                 </span>
               </div>
             )}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-4">
               {!isRecording ? (
                 <Button
                   onClick={startRecording}
                   disabled={!hasAudioConsent || isUploading}
+                  className="gap-2"
                 >
                   <Mic className="size-4" aria-hidden />
                   {consultation.audio_storage_path
@@ -345,27 +344,39 @@ export default function ConsultationDetailPage() {
                     : "Start recording"}
                 </Button>
               ) : (
-                <Button variant="destructive" onClick={stopRecording}>
+                <Button variant="destructive" onClick={stopRecording} className="gap-2 animate-scale-in">
                   <Square className="size-4" aria-hidden />
                   Stop recording
                 </Button>
               )}
               {isRecording && (
-                <span className="flex items-center gap-2 text-sm text-destructive">
-                  <span className="size-2 animate-pulse rounded-full bg-destructive" />
-                  Recording…
-                </span>
+                <div className="flex items-center gap-2.5">
+                  <div className="relative flex items-center justify-center">
+                    <span className="absolute size-3 rounded-full bg-destructive pulse-ring" />
+                    <span className="size-2.5 animate-pulse rounded-full bg-destructive" />
+                  </div>
+                  <span className="text-sm font-medium text-destructive animate-recording-pulse">
+                    Recording…
+                  </span>
+                </div>
               )}
               {isUploading && (
-                <span className="text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   Uploading…
-                </span>
+                </div>
               )}
             </div>
             {consultation.audio_storage_path && !isRecording && (
-              <p className="text-xs text-muted-foreground">
-                Audio attached ({formatBytes(consultation.audio_size_bytes)}).
-              </p>
+              <div className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm">
+                <svg className="size-4 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                <span className="text-success-foreground">
+                  Audio attached ({formatBytes(consultation.audio_size_bytes)})
+                </span>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -445,19 +456,24 @@ function ConsentRow({
   pending: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="space-y-0.5">
-        <p className="text-sm font-medium">{label}</p>
-        <p className="text-xs text-muted-foreground">{description}</p>
+    <div className="flex items-center justify-between transition-smooth">
+      <div className="flex items-center gap-3">
+        <div className={`flex size-8 items-center justify-center rounded-lg transition-smooth ${granted ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
+          <ShieldCheck className="size-4" aria-hidden />
+        </div>
+        <div className="space-y-0.5">
+          <p className="text-sm font-medium">{label}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
       </div>
       {granted ? (
-        <Badge variant="outline" className="gap-1">
-          <ShieldCheck className="size-3" aria-hidden />
+        <Badge variant="outline" className="gap-1.5 border-success/30 bg-success/5 text-success">
+          <span className="size-1.5 rounded-full bg-success" />
           Granted
         </Badge>
       ) : (
-        <Button size="sm" variant="outline" onClick={onGrant} disabled={pending}>
-          Record consent
+        <Button size="sm" variant="outline" onClick={onGrant} disabled={pending} className="transition-smooth">
+          {pending ? "Recording…" : "Record consent"}
         </Button>
       )}
     </div>
