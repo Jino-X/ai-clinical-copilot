@@ -23,10 +23,10 @@ from app.schemas.clinical_extraction import (
     ProcessingStage,
     ProcessingStatusResponse,
 )
+from app.services.ai.clinical_extraction import ClinicalExtractionService
 from app.services.ai.comparison import VisitComparisonService
 from app.services.ai.context_builder import PatientContextBuilder
 from app.services.ai.doctor_summary import DoctorSummaryService
-from app.services.ai.extraction import ClinicalExtractionService
 from app.services.audit.service import AuditAction
 
 router = APIRouter(prefix="/consultations", tags=["local-ai"])
@@ -568,9 +568,16 @@ async def get_extraction(
     if row is None:
         return None
 
+    import json
+    
+    # The extraction field is stored as JSONB but asyncpg returns it as a string
+    extraction_data = row["extraction"]
+    if isinstance(extraction_data, str):
+        extraction_data = json.loads(extraction_data)
+    
     return ExtractResponse(
         extraction_id=row["id"],
-        extraction=ClinicalExtraction.model_validate(row["extraction"]),
+        extraction=ClinicalExtraction.model_validate(extraction_data),
         provider=row["provider"],
         model=row["model"],
     )
@@ -594,9 +601,16 @@ async def get_summary(
     if row is None:
         return None
 
+    import json
+    
+    # source_references is stored as JSONB but asyncpg returns it as a string
+    source_refs = row["source_references"]
+    if isinstance(source_refs, str):
+        source_refs = json.loads(source_refs)
+    
     return DoctorSummaryResponse(
         summary=row["summary"],
-        source_references=row["source_references"],
+        source_references=source_refs,
         provider=row["provider"],
         model=row["model"],
     )

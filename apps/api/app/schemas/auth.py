@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.core.permissions import OrganizationRole, Permission
+from app.core.permissions import Permission
 
 
 class UserProfile(BaseModel):
@@ -22,15 +22,14 @@ class MembershipSummary(BaseModel):
 
     organization_id: UUID
     organization_name: str
-    role: OrganizationRole
     status: str
 
 
 class CurrentUserResponse(BaseModel):
     profile: UserProfile
     memberships: list[MembershipSummary]
-    # The organization this request acted in, and what the caller may do in it.
-    # Resolved server-side from membership, never from the request body.
+    # The organization this request acted in. Resolved server-side from
+    # membership, never from the request body.
     active_organization_id: UUID | None = None
     permissions: list[Permission] = Field(default_factory=list)
 
@@ -49,8 +48,6 @@ class OrganizationResponse(BaseModel):
     id: UUID
     name: str
     created_at: datetime
-    # The caller's own role in this organization.
-    role: OrganizationRole | None = None
 
 
 class CreateOrganizationRequest(BaseModel):
@@ -63,29 +60,3 @@ class UpdateOrganizationRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str = Field(min_length=2, max_length=200)
-
-
-class MemberResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
-    user_id: UUID
-    organization_id: UUID
-    email: EmailStr
-    full_name: str | None = None
-    role: OrganizationRole
-    status: str
-    created_at: datetime
-
-
-class AddMemberRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    email: EmailStr
-    role: OrganizationRole = OrganizationRole.DOCTOR
-
-
-class UpdateMemberRoleRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    role: OrganizationRole

@@ -108,9 +108,10 @@ class StorageService:
         storage_path = self._storage_path(organization_id, consultation_id, content_type)
 
         # Supabase Storage v1 API: create a signed upload URL.
+        # POST /object/upload/sign/{bucket}/{path} returns a signed URL + token.
         url = (
-            f"{self._base_url}/storage/v1/object/upload/resumable/"
-            f"{quote(self._bucket)}/{quote(storage_path)}"
+            f"{self._base_url}/storage/v1/object/upload/sign/"
+            f"{quote(self._audio_bucket)}/{quote(storage_path)}"
         )
 
         async with httpx.AsyncClient(timeout=30) as client:
@@ -118,28 +119,37 @@ class StorageService:
                 url,
                 headers={
                     **self._headers(),
-                    "Content-Type": content_type,
+                    "Content-Type": "application/json",
                     "x-upsert": "true",
                 },
-                params={"expires_at": str(int(time.time()) + SIGNED_URL_TTL_SECONDS)},
+                json={},
             )
 
         if response.status_code not in (200, 201):
             logger.error(
                 "storage_upload_url_failed",
                 status=response.status_code,
-                bucket=self._bucket,
+                bucket=self._audio_bucket,
                 error_type="http_error",
+                detail=response.text[:200],
             )
             raise ServiceUnavailableError("Could not create upload URL")
 
         body = response.json()
-        upload_url = body.get("url") or str(response.url)
+        # The API returns a relative path like "/object/upload/sign/...?token=..."
+        # Build the full URL the client PUTs to.
+        signed_path = body.get("url") or body.get("signedUrl") or ""
+        if signed_path.startswith("http"):
+            upload_url = signed_path
+        elif signed_path:
+            upload_url = f"{self._base_url}/storage/v1{signed_path}"
+        else:
+            upload_url = str(response.url)
         expires_at = str(int(time.time()) + SIGNED_URL_TTL_SECONDS)
 
         return SignedUpload(
             upload_url=upload_url,
-            storage_path=f"{self._bucket}/{storage_path}",
+            storage_path=f"{self._audio_bucket}/{storage_path}",
             expires_at=expires_at,
         )
 
@@ -230,7 +240,7 @@ class StorageService:
         )
 
         url = (
-            f"{self._base_url}/storage/v1/object/upload/resumable/"
+            f"{self._base_url}/storage/v1/object/upload/sign/"
             f"{quote(self._document_bucket)}/{quote(storage_path)}"
         )
 
@@ -239,10 +249,10 @@ class StorageService:
                 url,
                 headers={
                     **self._headers(),
-                    "Content-Type": content_type,
+                    "Content-Type": "application/json",
                     "x-upsert": "true",
                 },
-                params={"expires_at": str(int(time.time()) + SIGNED_URL_TTL_SECONDS)},
+                json={},
             )
 
         if response.status_code not in (200, 201):
@@ -251,11 +261,18 @@ class StorageService:
                 status=response.status_code,
                 bucket=self._document_bucket,
                 error_type="http_error",
+                detail=response.text[:200],
             )
             raise ServiceUnavailableError("Could not create upload URL")
 
         body = response.json()
-        upload_url = body.get("url") or str(response.url)
+        signed_path = body.get("url") or body.get("signedUrl") or ""
+        if signed_path.startswith("http"):
+            upload_url = signed_path
+        elif signed_path:
+            upload_url = f"{self._base_url}/storage/v1{signed_path}"
+        else:
+            upload_url = str(response.url)
         expires_at = str(int(time.time()) + SIGNED_URL_TTL_SECONDS)
 
         return SignedUpload(

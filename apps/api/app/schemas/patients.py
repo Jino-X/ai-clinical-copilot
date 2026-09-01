@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from enum import StrEnum
 from uuid import UUID
 
@@ -100,8 +100,8 @@ class PatientResponse(PatientBase):
 
     id: UUID
     organization_id: UUID
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
 
 class PatientSummary(BaseModel):

@@ -168,7 +168,11 @@ export function SoapNoteEditor({
   });
 
   const canTranscribe = hasAudio && consultationStatus !== "cancelled";
-  const canGenerateSoap = !!note || consultationStatus === "completed";
+  // SOAP generation can happen if:
+  // 1. A note already exists (for regeneration), OR
+  // 2. The consultation is completed (transcript should exist by then), OR  
+  // 3. Always allow it - the backend will return an error if no transcript exists
+  const canGenerateSoap = true; // Backend validates transcript existence
   const canEdit = note && note.status !== "approved" && note.status !== "rejected";
   const canApprove = note && note.status !== "approved" && note.status !== "rejected";
   const canReject = note && note.status === "draft";

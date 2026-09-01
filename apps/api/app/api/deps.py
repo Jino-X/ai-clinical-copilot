@@ -12,11 +12,10 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.core.config import Settings, get_settings
 from app.core.errors import AuthenticationError, PermissionDeniedError
 from app.core.permissions import (
-    OrganizationRole,
     Permission,
     permissions_for,
 )
-from app.core.permissions import require as require_permission_for_role
+from app.core.permissions import require as require_permission
 from app.core.security import SupabaseTokenVerifier, TokenClaims
 from app.db.pool import Database
 from app.repositories.organizations import OrganizationRepository
@@ -84,7 +83,7 @@ TenantConnection = Annotated[asyncpg.Connection, Depends(get_tenant_connection)]
 
 @dataclass(frozen=True, slots=True)
 class OrganizationContext:
-    """The organization a request acts in, and the caller's role in it.
+    """The organization a request acts in.
 
     Constructing this is the authorization step: it only exists if the caller
     holds an active membership, so `organization_id` here is always verified —
@@ -92,15 +91,14 @@ class OrganizationContext:
     """
 
     organization_id: UUID
-    role: OrganizationRole
     user: CurrentUser
 
     @property
     def permissions(self) -> frozenset[Permission]:
-        return permissions_for(self.role)
+        return permissions_for()
 
     def require(self, permission: Permission) -> None:
-        require_permission_for_role(self.role, permission)
+        require_permission(permission)
 
 
 async def get_organization_context(
@@ -115,35 +113,30 @@ async def get_organization_context(
     repository = OrganizationRepository()
 
     if requested_organization_id is not None:
-        role = await repository.get_membership_role(
+        is_member = await repository.is_member(
             connection,
             organization_id=requested_organization_id,
             user_id=user.id,
         )
-        if role is None:
+        if not is_member:
             # Deliberately "not a member" rather than "no such organization":
             # confirming existence would leak that a tenant id is real.
             raise PermissionDeniedError(
                 "You are not an active member of that organization"
             )
         return OrganizationContext(
-            organization_id=requested_organization_id, role=role, user=user
+            organization_id=requested_organization_id, user=user
         )
 
-    memberships = [
-        membership
-        for membership in await repository.list_memberships(connection, user.id)
-        if membership.status == "active"
-    ]
+    memberships = await repository.list_memberships(connection, user.id)
+    active = [m for m in memberships if m.status == "active"]
 
-    if not memberships:
+    if not active:
         raise PermissionDeniedError("You do not belong to an organization yet")
 
-    if len(memberships) == 1:
-        membership = memberships[0]
+    if len(active) == 1:
         return OrganizationContext(
-            organization_id=membership.organization_id,
-            role=membership.role,
+            organization_id=active[0].organization_id,
             user=user,
         )
 
@@ -151,11 +144,10 @@ async def get_organization_context(
     # still re-checked against the membership list rather than trusted.
     profile = await ProfileRepository().get(connection, user.id)
     preferred = profile.active_organization_id if profile else None
-    for membership in memberships:
+    for membership in active:
         if membership.organization_id == preferred:
             return OrganizationContext(
                 organization_id=membership.organization_id,
-                role=membership.role,
                 user=user,
             )
 
@@ -174,7 +166,7 @@ def requires(
 ) -> Callable[[OrganizationContext], OrganizationContext]:
     """Route dependency asserting the caller holds a permission.
 
-    @router.get("/members", dependencies=[Depends(requires(Permission.MEMBER_READ))])
+    @router.get("/patients", dependencies=[Depends(requires(Permission.PATIENT_READ))])
     """
 
     def dependency(context: OrganizationDep) -> OrganizationContext:

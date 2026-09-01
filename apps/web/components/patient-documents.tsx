@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { getPublicEnv } from "@/lib/env";
 import { ApiError } from "@/lib/api/client";
 import {
   createUploadUrlApi,
@@ -83,11 +84,13 @@ export function PatientDocuments({ patientId }: { patientId: string }) {
         file.size,
       );
 
+      const { NEXT_PUBLIC_SUPABASE_ANON_KEY } = getPublicEnv();
       const response = await fetch(uploadUrl.upload_url, {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": file.type || "application/octet-stream",
-          "x-upsert": "true",
+          apikey: NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
         },
         body: file,
       });

@@ -3,144 +3,103 @@ from __future__ import annotations
 from typing import Any
 
 from app.providers.llm.base import LLMProvider
-from app.schemas.clinical_extraction import ClinicalExtraction
 
+# --- Classification + Medical Extraction -------------------------------------
+
+# The system prompt enforces AI safety rules (PRD §12):
+# - Never invent patient information
+# - Use "Not found in available patient records." for absent information
+# - Use "Requires physician verification." for uncertain information
+# - Extracted data is a draft requiring doctor verification
 _EXTRACTION_SYSTEM_PROMPT = """\
-You are a clinical documentation assistant. Extract clinically relevant \
-information from the following consultation transcript. The transcript has \
-been translated to English from Tamil (or a Tamil-English mix).
+You are a clinical documentation assistant. Your job is to classify a medical
+document and extract structured medical information from its text. You assist
+the doctor but never replace their judgment.
 
 CRITICAL SAFETY RULES (PRD §12):
-1. Never invent patient information, symptoms, medications, lab values, \
-diagnoses, or dates. Only extract information explicitly present in the \
-transcript.
-2. If a value is not mentioned in the transcript, use null (for single \
-values) or [] (for lists). Do NOT guess.
-3. If you are uncertain about something, add it to the "uncertainties" list.
-4. Do not make medical decisions or prescribe medication.
-5. Use clear, professional clinical language.
-6. The "patient" object captures demographics AS MENTIONED in the transcript \
-only. The backend retrieves authoritative patient data from the database \
-separately.
+1. Never invent patient information, symptoms, medications, lab values,
+   diagnoses, or dates. Only use information present in the document text.
+2. If information is not available in the text, use:
+   "Not found in available patient records."
+3. If you are uncertain about something, use:
+   "Requires physician verification."
+4. The extracted information is a DRAFT requiring doctor verification before
+   it becomes part of the official patient record.
+5. Do not make autonomous medical decisions or prescribe medication.
 
-Extract:
-- patient: name, age, gender as mentioned in the conversation (null if not \
-mentioned)
-- chief_complaint: the main reason for the visit
-- symptoms: list of symptoms with duration, severity, onset, status, trigger \
-where available
-- medical_conditions: conditions mentioned during the conversation
-- medications_mentioned: medications discussed
-- allergies_mentioned: allergies discussed
-- tests_mentioned: lab tests or investigations mentioned
-- doctor_observations: doctor's observable findings and observations
-- treatments_mentioned: treatments discussed
-- follow_up: follow-up instructions if any
-- important_information: any other clinically relevant information
-- uncertainties: anything you are not sure about
+Classify the document into one of these categories:
+- lab_report: Laboratory test results
+- imaging_report: Radiology or imaging reports
+- prescription: Medication prescriptions
+- referral_letter: Referral letters between providers
+- discharge_summary: Hospital discharge summaries
+- clinical_note: Clinical notes or progress notes
+- insurance_document: Insurance or billing documents
+- identification: Patient identification documents
+- other: Does not fit any category above
 
-Respond ONLY with the JSON object. No other text.
+Extract structured medical information:
+- document_type: A brief description of the document type.
+- date: The date on the document, if present.
+- summary: A brief summary of the document content.
+- key_findings: Important findings (lab values, diagnoses, etc.).
+- medications: Medications mentioned in the document.
+- conditions: Medical conditions mentioned.
+- follow_up: Follow-up instructions, if any.
+- source_references: References to the document sections that informed the
+  extraction.
 """
 
 _EXTRACTION_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
-        "patient": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string"},
-                "age": {"type": "string"},
-                "gender": {"type": "string"},
-            },
+        "category": {
+            "type": "string",
+            "enum": [
+                "lab_report",
+                "imaging_report",
+                "prescription",
+                "referral_letter",
+                "discharge_summary",
+                "clinical_note",
+                "insurance_document",
+                "identification",
+                "other",
+            ],
         },
-        "chief_complaint": {"type": "string"},
-        "symptoms": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string"},
-                    "duration": {"type": "string"},
-                    "severity": {"type": "string"},
-                    "onset": {"type": "string"},
-                    "status": {"type": "string"},
-                    "trigger": {"type": "string"},
-                },
-                "required": ["name"],
-            },
-        },
-        "medical_conditions": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "medications_mentioned": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "allergies_mentioned": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "tests_mentioned": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "doctor_observations": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "treatments_mentioned": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
+        "document_type": {"type": "string"},
+        "date": {"type": "string"},
+        "summary": {"type": "string"},
+        "key_findings": {"type": "array", "items": {"type": "string"}},
+        "medications": {"type": "array", "items": {"type": "string"}},
+        "conditions": {"type": "array", "items": {"type": "string"}},
         "follow_up": {"type": "string"},
-        "important_information": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "uncertainties": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
+        "source_references": {"type": "array", "items": {"type": "string"}},
     },
-    "required": [
-        "chief_complaint",
-        "symptoms",
-        "medical_conditions",
-        "medications_mentioned",
-        "allergies_mentioned",
-        "tests_mentioned",
-        "doctor_observations",
-        "treatments_mentioned",
-        "important_information",
-        "uncertainties",
-    ],
+    "required": ["category", "summary"],
 }
 
 
-class ClinicalExtractionService:
-    """Extracts structured clinical information from an English transcript.
+class DocumentExtractionService:
+    """Classifies and extracts medical information from document text.
 
-    Uses the configured LLM (Ollama/Qwen3 for local dev) with structured JSON
-    output. The LLM is NOT the source of truth — the backend combines the
-    extraction with existing patient records from Supabase before generating
-    the doctor-facing summary (PRD §8).
+    The output is always a draft for physician review (PRD §9, §12). The LLM
+    is instructed to never invent clinical data.
     """
 
     def __init__(self, llm: LLMProvider) -> None:
         self._llm = llm
 
-    async def extract(self, *, english_transcript: str) -> ClinicalExtraction:
-        """Extract clinical information from an English-normalized transcript.
+    async def extract(self, *, document_text: str) -> dict[str, Any]:
+        """Classify and extract medical information from document text.
 
-        Returns a validated ClinicalExtraction. The LLM is instructed to
-        never invent data — absent fields are null/empty (PRD §12).
+        Returns a dict with: category, document_type, date, summary,
+        key_findings, medications, conditions, follow_up, source_references.
         """
         user_prompt = (
-            "Extract clinical information from the following consultation "
-            "transcript. Only extract information explicitly present. "
-            "Use null or [] for anything not mentioned.\n\n"
-            f"Transcript:\n{english_transcript}"
+            "Classify and extract medical information from the following "
+            "document text. Only use information present in the text.\n\n"
+            f"Document text:\n{document_text}"
         )
 
         response = await self._llm.complete(
@@ -149,5 +108,4 @@ class ClinicalExtractionService:
             response_schema=_EXTRACTION_SCHEMA,
         )
 
-        # Validate with Pydantic to ensure the schema is correct.
-        return ClinicalExtraction.model_validate(response.content)
+        return response.content

@@ -27,6 +27,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getPublicEnv } from "@/lib/env";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { SoapNoteEditor } from "@/components/soap-note-editor";
@@ -149,11 +150,15 @@ export default function ConsultationDetailPage() {
       );
 
       // Upload directly to Supabase Storage via the signed URL.
+      // The signed URL token grants upload permission, but the Storage API
+      // still requires the apikey header for routing/validation.
+      const { NEXT_PUBLIC_SUPABASE_ANON_KEY } = getPublicEnv();
       const uploadResponse = await fetch(uploadUrl.upload_url, {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": blob.type || "audio/webm",
-          "x-upsert": "true",
+          apikey: NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
         },
         body: blob,
       });
@@ -170,12 +175,14 @@ export default function ConsultationDetailPage() {
       );
     },
     onSuccess: () => {
+      setIsUploading(false);
       queryClient.invalidateQueries({
         queryKey: ["consultations", consultationId],
       });
       toast.success("Audio uploaded");
     },
     onError: (e) => {
+      setIsUploading(false);
       toast.error(
         e instanceof ApiError || e instanceof Error
           ? e.message

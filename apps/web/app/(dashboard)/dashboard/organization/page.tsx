@@ -43,7 +43,6 @@ export default function OrganizationPage() {
   );
   const orgId = activeOrg?.organization_id ?? null;
   const orgName = activeOrg?.organization_name ?? null;
-  const canUpdate = me?.permissions.includes("organization:update") ?? false;
 
   const {
     register,
@@ -97,47 +96,36 @@ export default function OrganizationPage() {
         </p>
       </div>
 
-      {canUpdate ? (
-        <Card>
-          <form onSubmit={onSubmit}>
-            <CardHeader>
-              <CardTitle>Rename organization</CardTitle>
-              <CardDescription>
-                This name appears across your workspace.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Organization name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  defaultValue={orgName ?? ""}
-                  {...register("name")}
-                  aria-invalid={!!errors.name}
-                />
-                {errors.name && (
-                  <p className="text-xs text-destructive">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-              <Button type="submit" disabled={pending}>
-                {pending ? "Saving…" : "Save changes"}
-              </Button>
-            </CardContent>
-          </form>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="py-6">
-            <p className="text-sm text-muted-foreground">
-              You do not have permission to rename this organization. Ask an
-              admin or owner.
-            </p>
+      <Card>
+        <form onSubmit={onSubmit}>
+          <CardHeader>
+            <CardTitle>Rename organization</CardTitle>
+            <CardDescription>
+              This name appears across your workspace.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Organization name</Label>
+              <Input
+                id="name"
+                type="text"
+                defaultValue={orgName ?? ""}
+                {...register("name")}
+                aria-invalid={!!errors.name}
+              />
+              {errors.name && (
+                <p className="text-xs text-destructive">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
+            <Button type="submit" disabled={pending}>
+              {pending ? "Saving…" : "Save changes"}
+            </Button>
           </CardContent>
-        </Card>
-      )}
+        </form>
+      </Card>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
@@ -44,15 +45,15 @@ class ConsultationResponse(BaseModel):
     doctor_id: UUID
     status: ConsultationStatus
     chief_complaint: str | None = None
-    started_at: str | None = None
-    ended_at: str | None = None
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
     duration_seconds: int | None = None
     audio_storage_path: str | None = None
     audio_content_type: str | None = None
     audio_size_bytes: int | None = None
     doctor_summary: str | None = None
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
 
 class ConsultationSummary(BaseModel):
@@ -65,10 +66,10 @@ class ConsultationSummary(BaseModel):
     doctor_id: UUID
     status: ConsultationStatus
     chief_complaint: str | None = None
-    started_at: str | None = None
-    ended_at: str | None = None
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
     duration_seconds: int | None = None
-    created_at: str
+    created_at: datetime
 
 
 # --- Consent -----------------------------------------------------------------

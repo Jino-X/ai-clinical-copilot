@@ -62,8 +62,8 @@ export default function OnboardingPage() {
           Create your organization
         </h1>
         <p className="text-sm text-muted-foreground">
-          You will be the owner of this organization and can invite team
-          members afterwards.
+          Create your clinic or practice to start managing patients and
+          consultations.
         </p>
       </div>
 

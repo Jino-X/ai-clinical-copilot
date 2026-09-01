@@ -51,7 +51,7 @@ export default async function DashboardPage() {
             <CardTitle>Create your organization</CardTitle>
             <CardDescription>
               You need an organization before you can start managing
-              patients and consultations. You&apos;ll become its owner.
+              patients and consultations.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -76,7 +76,7 @@ export default async function DashboardPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          {activeOrg.organization_name} — you are {activeOrg.role}
+          {activeOrg.organization_name}
         </p>
       </div>
 
@@ -103,19 +103,16 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <Users className="size-4" aria-hidden />
-              Members
+              Patients
             </CardTitle>
-            <CardDescription>
-              {activeMemberships.length} active{" "}
-              {activeMemberships.length === 1 ? "member" : "members"}
-            </CardDescription>
+            <CardDescription>Manage your patients</CardDescription>
           </CardHeader>
           <CardContent>
             <Link
-              href="/dashboard/members"
+              href="/dashboard/patients"
               className="text-sm text-primary hover:underline"
             >
-              Manage members →
+              View patients →
             </Link>
           </CardContent>
         </Card>
@@ -124,14 +121,17 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <FileText className="size-4" aria-hidden />
-              Patients
+              Consultations
             </CardTitle>
-            <CardDescription>Coming in Phase 3</CardDescription>
+            <CardDescription>Active and past consultations</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Patient management will be available in the next phase.
-            </p>
+            <Link
+              href="/dashboard/consultations"
+              className="text-sm text-primary hover:underline"
+            >
+              View consultations →
+            </Link>
           </CardContent>
         </Card>
       </div>

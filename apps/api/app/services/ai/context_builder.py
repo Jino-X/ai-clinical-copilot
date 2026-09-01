@@ -48,7 +48,7 @@ class PatientContextBuilder:
             lines = ["Active conditions:"]
             for c in conditions:
                 status = c.status if c.status else "unknown"
-                lines.append(f"  - {c.condition_name} (status: {status})")
+                lines.append(f"  - {c.name} (status: {status})")
             sections.append("\n".join(lines))
         else:
             sections.append("Active conditions: None recorded.")
@@ -61,7 +61,7 @@ class PatientContextBuilder:
             lines = ["Current medications:"]
             for m in medications:
                 status = m.status if m.status else "unknown"
-                med_line = f"  - {m.medication_name}"
+                med_line = f"  - {m.name}"
                 if m.dosage:
                     med_line += f" ({m.dosage})"
                 med_line += f" [status: {status}]"

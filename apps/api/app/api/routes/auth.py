@@ -48,7 +48,7 @@ async def me(user: CurrentUserDep, connection: TenantConnection) -> CurrentUserR
         profile=profile,
         memberships=memberships,
         active_organization_id=resolved.organization_id if resolved else None,
-        permissions=sorted(permissions_for(resolved.role)) if resolved else [],
+        permissions=sorted(permissions_for()) if resolved else [],
     )
 
 
