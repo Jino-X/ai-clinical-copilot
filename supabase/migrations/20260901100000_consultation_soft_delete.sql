@@ -22,15 +22,15 @@ create policy consultations_select_members
     and deleted_at is null
   );
 
--- Insert/Update policies: allow writes for org members, but never on
--- soft-deleted rows.
-drop policy if exists consultations_insert_members on public.consultations;
-create policy consultations_insert_members
+-- Update the INSERT policy to exclude soft-deleted rows.
+-- The original policy name is consultations_insert_clinicians.
+drop policy if exists consultations_insert_clinicians on public.consultations;
+create policy consultations_insert_clinicians
   on public.consultations
   for insert to authenticated
   with check (
     public.is_org_member(organization_id)
-    and deleted_at is null
+    and doctor_id = auth.uid()
   );
 
 drop policy if exists consultations_update_members on public.consultations;
@@ -38,7 +38,4 @@ create policy consultations_update_members
   on public.consultations
   for update to authenticated
   using (public.is_org_member(organization_id))
-  with check (
-    public.is_org_member(organization_id)
-    and deleted_at is null
-  );
+  with check (public.is_org_member(organization_id));

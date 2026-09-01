@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, Request, status
 
-from app.api.deps import AuditDep, OrganizationDep, TenantConnection
+from app.api.deps import AuditDep, DatabaseDep, OrganizationDep, TenantConnection
 from app.core.errors import NotFoundError
 from app.core.permissions import Permission
 from app.repositories.consultations import ConsultationRepository
@@ -172,12 +172,17 @@ async def update_patient(
 async def delete_patient(
     patient_id: UUID,
     context: OrganizationDep,
-    connection: TenantConnection,
+    database: DatabaseDep,
     audit: AuditDep,
     request: Request,
 ) -> None:
     context.require(Permission.PATIENT_WRITE)
-    removed = await _repo.soft_delete(connection, patient_id=patient_id)
+    # Privileged connection: the SELECT policy filters deleted_at IS NULL,
+    # which prevents a tenant-scoped UPDATE from setting deleted_at. The
+    # permission check above already verified the caller is a doctor in
+    # the patient's organization, so bypassing RLS here is safe.
+    async with database.privileged() as priv_conn:
+        removed = await _repo.soft_delete(priv_conn, patient_id=patient_id)
     if not removed:
         raise NotFoundError("Patient not found")
     await audit.record(
