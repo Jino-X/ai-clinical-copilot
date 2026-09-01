@@ -49,7 +49,7 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
       <form action={formAction}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 mb-3">
           {state && !state.ok && (
             <p
               role="alert"

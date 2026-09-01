@@ -84,6 +84,13 @@ export async function cancelConsultationApi(
   );
 }
 
+export async function deleteConsultationApi(
+  consultationId: string,
+): Promise<void> {
+  const accessToken = await getAccessToken();
+  await api.delete(`/consultations/${consultationId}`, { accessToken });
+}
+
 export async function updateConsultationApi(
   consultationId: string,
   data: { chief_complaint?: string | null; doctor_summary?: string | null },

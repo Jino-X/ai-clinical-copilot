@@ -145,6 +145,19 @@ class ConsultationRepository:
         )
         return ConsultationResponse.model_validate(dict(row)) if row else None
 
+    async def soft_delete(
+        self, connection: asyncpg.Connection, *, consultation_id: UUID
+    ) -> bool:
+        result = await connection.execute(
+            """
+            update public.consultations
+               set deleted_at = now()
+             where id = $1 and deleted_at is null
+            """,
+            consultation_id,
+        )
+        return result.endswith("1")
+
     async def attach_audio(
         self,
         connection: asyncpg.Connection,

@@ -223,6 +223,33 @@ async def cancel_consultation(
     return consultation
 
 
+@router.delete(
+    "/{consultation_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a consultation (soft delete)",
+)
+async def delete_consultation(
+    consultation_id: UUID,
+    context: OrganizationDep,
+    connection: TenantConnection,
+    audit: AuditDep,
+    request: Request,
+) -> None:
+    context.require(Permission.CONSULTATION_CONDUCT)
+    removed = await _repo.soft_delete(connection, consultation_id=consultation_id)
+    if not removed:
+        raise NotFoundError("Consultation not found")
+    await audit.record(
+        AuditAction.CONSULTATION_COMPLETED,
+        actor_user_id=context.user.id,
+        organization_id=context.organization_id,
+        resource_type="consultation",
+        resource_id=str(consultation_id),
+        request=request,
+        metadata={"action": "soft_delete"},
+    )
+
+
 # ===========================================================================
 # Audio upload (direct-to-storage via signed URLs)
 # ===========================================================================

@@ -20,6 +20,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PatientAvatar } from "@/components/clinical";
 import { PatientIntelligence } from "@/components/patient-intelligence";
 import { PatientDocuments } from "@/components/patient-documents";
@@ -28,6 +36,7 @@ import {
   addAllergyApi,
   addConditionApi,
   addMedicationApi,
+  deletePatientApi,
   getPatientApi,
   listAllergiesApi,
   listConditionsApi,
@@ -68,6 +77,7 @@ export default function PatientDetailPage() {
   const queryClient = useQueryClient();
   const [, startTransition] = useTransition();
   const [startingConsultation, setStartingConsultation] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: patient, isLoading } = useQuery({
     queryKey: ["patients", patientId],
@@ -194,6 +204,17 @@ export default function PatientDetailPage() {
       toast.error(e instanceof ApiError ? e.message : "Something went wrong"),
   });
 
+  const deletePatientMutation = useMutation({
+    mutationFn: () => deletePatientApi(patientId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patients", "list"] });
+      toast.success("Patient deleted");
+      router.push("/dashboard/patients");
+    },
+    onError: (e) =>
+      toast.error(e instanceof ApiError ? e.message : "Failed to delete patient"),
+  });
+
   if (isLoading || !patient) {
     return (
       <div className="mx-auto max-w-4xl">
@@ -248,10 +269,21 @@ export default function PatientDetailPage() {
             </div>
           </div>
         </div>
-        <Button onClick={startConsultation} disabled={startingConsultation}>
-          <Stethoscope className="size-4" aria-hidden />
-          {startingConsultation ? "Starting…" : "Start consultation"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={startConsultation} disabled={startingConsultation}>
+            <Stethoscope className="size-4" aria-hidden />
+            {startingConsultation ? "Starting…" : "Start consultation"}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowDeleteDialog(true)}
+            aria-label="Delete patient"
+            className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          >
+            <Trash2 className="size-4" aria-hidden />
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="overview">
@@ -609,6 +641,35 @@ export default function PatientDetailPage() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete patient?</DialogTitle>
+            <DialogDescription>
+              This will soft-delete {patient.first_name} {patient.last_name} and hide
+              all their records from all views. The data is preserved in the database
+              but no longer accessible. This action cannot be undone from the UI.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deletePatientMutation.mutate()}
+              disabled={deletePatientMutation.isPending}
+            >
+              {deletePatientMutation.isPending ? "Deleting…" : "Delete patient"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

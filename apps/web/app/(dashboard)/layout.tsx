@@ -20,7 +20,7 @@ export default async function DashboardLayout({
 
   // Fetch the backend's view of the user. If the backend is unreachable
   // or the profile doesn't exist yet (e.g. the auth trigger hasn't run),
-  // we still render the shell — the onboarding page handles the "no
+  // we still render the shell — the dashboard page handles the "no
   // organization" case.
   let profile: { full_name: string | null; email: string } | null = null;
   let hasOrganizations = false;

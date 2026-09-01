@@ -181,13 +181,12 @@ async def delete_patient(
     if not removed:
         raise NotFoundError("Patient not found")
     await audit.record(
-        AuditAction.PATIENT_UPDATED,
+        AuditAction.PATIENT_DELETED,
         actor_user_id=context.user.id,
         organization_id=context.organization_id,
         resource_type="patient",
         resource_id=str(patient_id),
         request=request,
-        metadata={"action": "soft_delete"},
     )
 
 

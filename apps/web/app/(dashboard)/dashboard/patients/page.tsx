@@ -70,7 +70,7 @@ export default function PatientsPage() {
           {query && (
             <button
               onClick={() => setQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground transition-smooth"
+              className="absolute right-8 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground transition-smooth"
             >
               Clear
             </button>

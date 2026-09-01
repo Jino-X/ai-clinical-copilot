@@ -116,7 +116,7 @@ export default function NewPatientPage() {
               Basic demographic and contact information.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 mb-3">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="first_name">First name *</Label>

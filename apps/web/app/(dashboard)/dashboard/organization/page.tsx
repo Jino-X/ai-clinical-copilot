@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Building2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,8 +18,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageHeader } from "@/components/clinical";
 import { ApiError } from "@/lib/api/client";
 import {
+  createOrganizationApi,
   getCurrentUserApi,
   updateOrganizationApi,
 } from "@/lib/api/client-auth";
@@ -80,21 +83,81 @@ export default function OrganizationPage() {
     },
   });
 
-  const onSubmit = handleSubmit((data) => {
-    if (!orgId) return;
-    startTransition(() => renameMutation.mutate(data.name));
+  const createMutation = useMutation({
+    mutationFn: (name: string) => createOrganizationApi(name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+      toast.success("Organization created");
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError ? error.message : "Something went wrong",
+      );
+    },
   });
 
-  const pending = renameMutation.isPending;
+  const onSubmit = handleSubmit((data) => {
+    if (orgId) {
+      startTransition(() => renameMutation.mutate(data.name));
+    } else {
+      startTransition(() => createMutation.mutate(data.name));
+    }
+  });
 
+  const pending = renameMutation.isPending || createMutation.isPending;
+
+  // No organization yet — show create form
+  if (!orgId) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6">
+        <PageHeader
+          title="Create Organization"
+          description="Set up your clinic or practice workspace"
+          icon={Building2}
+        />
+        <Card>
+          <form onSubmit={onSubmit}>
+            <CardHeader>
+              <CardTitle>Organization details</CardTitle>
+              <CardDescription>
+                This name appears across your workspace and cannot be changed
+                easily later.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Organization name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="e.g. Chennai Medical Clinic"
+                  {...register("name")}
+                  aria-invalid={!!errors.name}
+                />
+                {errors.name && (
+                  <p className="text-xs text-destructive">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+              <Button type="submit" disabled={pending}>
+                {pending ? "Creating…" : "Create organization"}
+              </Button>
+            </CardContent>
+          </form>
+        </Card>
+      </div>
+    );
+  }
+
+  // Existing organization — show rename form
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Organization</h1>
-        <p className="text-sm text-muted-foreground">
-          {orgName ?? "Loading…"}
-        </p>
-      </div>
+      <PageHeader
+        title="Organization"
+        description={orgName ?? "Loading…"}
+        icon={Building2}
+      />
 
       <Card>
         <form onSubmit={onSubmit}>

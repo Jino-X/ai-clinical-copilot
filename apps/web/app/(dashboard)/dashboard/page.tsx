@@ -77,7 +77,7 @@ export default async function DashboardPage() {
           description="You need an organization before you can start managing patients and consultations."
           action={
             <Button asChild>
-              <Link href="/dashboard/onboarding">
+              <Link href="/dashboard/organization">
                 <Building2 className="size-4" aria-hidden />
                 Create organization
               </Link>

@@ -296,7 +296,7 @@ export default async function Home() {
               <span>AI prepares. Doctor decides.</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2026 Clinical Copilot. All rights reserved.
+              © {new Date().getFullYear()} Clinical Copilot. All rights reserved.
             </p>
           </div>
         </div>
