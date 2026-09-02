@@ -14,18 +14,9 @@ import {
   ShieldCheck,
   ShieldAlert,
   Calendar,
-  FileText,
-  Languages,
-  Stethoscope,
-  ChevronDown,
-  ChevronUp,
-  Sparkles,
   Clock,
 } from "lucide-react";
-import type {
-  ConsentType,
-  ClinicalExtraction,
-} from "@clinical-copilot/shared-types";
+import type { ConsentType } from "@clinical-copilot/shared-types";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge } from "@/components/clinical";
 import { SoapNoteEditor } from "@/components/soap-note-editor";
-import { AiPipeline } from "@/components/ai-pipeline";
+import { ConsultationWorkflow } from "@/components/consultation-workflow";
 import { ApiError } from "@/lib/api/client";
 import {
   cancelConsultationApi,
@@ -52,11 +43,6 @@ import {
   listConsentsApi,
   startConsultationApi,
 } from "@/lib/api/consultations";
-import {
-  getProcessingStatusApi,
-  getExtractionApi,
-  getSummaryApi,
-} from "@/lib/api/local-ai";
 
 export default function ConsultationDetailPage() {
   const params = useParams<{ consultationId: string }>();
@@ -72,38 +58,6 @@ export default function ConsultationDetailPage() {
   const { data: consents = [] } = useQuery({
     queryKey: ["consultations", consultationId, "consents"],
     queryFn: () => listConsentsApi(consultationId),
-  });
-
-  const { data: processingStatus } = useQuery({
-    queryKey: ["consultations", consultationId, "processing-status"],
-    queryFn: () => getProcessingStatusApi(consultationId),
-    enabled: !!consultation?.audio_storage_path,
-    refetchInterval: (query) => {
-      const data = query.state.data;
-      if (!data) return false;
-      // Poll while processing
-      if (
-        data.stage === "transcribing" ||
-        data.stage === "normalizing" ||
-        data.stage === "extracting" ||
-        data.stage === "summarizing"
-      ) {
-        return 3000;
-      }
-      return false;
-    },
-  });
-
-  const { data: extraction } = useQuery({
-    queryKey: ["consultations", consultationId, "extraction"],
-    queryFn: () => getExtractionApi(consultationId),
-    enabled: !!processingStatus?.has_extraction,
-  });
-
-  const { data: summary } = useQuery({
-    queryKey: ["consultations", consultationId, "summary"],
-    queryFn: () => getSummaryApi(consultationId),
-    enabled: !!processingStatus?.has_summary,
   });
 
   const hasAudioConsent = consents.some(
@@ -383,7 +337,10 @@ export default function ConsultationDetailPage() {
           <CardContent className="space-y-4">
             {!hasAudioConsent && (
               <div className="flex items-center gap-2.5 rounded-lg bg-warning/10 p-3.5 text-sm">
-                <ShieldAlert className="size-4 shrink-0 text-warning" aria-hidden />
+                <ShieldAlert
+                  className="size-4 shrink-0 text-warning"
+                  aria-hidden
+                />
                 <span className="text-warning-foreground">
                   Audio recording consent is required before recording.
                 </span>
@@ -433,7 +390,10 @@ export default function ConsultationDetailPage() {
             </div>
             {consultation.audio_storage_path && !isRecording && (
               <div className="flex items-center gap-2.5 rounded-lg bg-success/10 p-3.5 text-sm">
-                <CheckCircle className="size-4 shrink-0 text-success" aria-hidden />
+                <CheckCircle
+                  className="size-4 shrink-0 text-success"
+                  aria-hidden
+                />
                 <span className="text-success-foreground">
                   Audio attached ({formatBytes(consultation.audio_size_bytes)})
                 </span>
@@ -449,25 +409,10 @@ export default function ConsultationDetailPage() {
           <AudioPlayer consultationId={consultationId} />
         )}
 
-      {/* AI Pipeline with Transcript & Extraction Display */}
+      {/* AI Documentation Workflow */}
       {consultation.status !== "cancelled" &&
         consultation.audio_storage_path && (
-          <div className="space-y-6">
-            <AiPipeline consultationId={consultationId} />
-
-            {/* Transcript & Normalized Text */}
-            {processingStatus?.has_english_transcript && (
-              <TranscriptViewer consultationId={consultationId} />
-            )}
-
-            {/* Clinical Extraction */}
-            {extraction && (
-              <ClinicalExtractionCard extraction={extraction.extraction} />
-            )}
-
-            {/* Visit Comparison & Summary */}
-            {summary && <DoctorSummaryCard summary={summary} />}
-          </div>
+          <ConsultationWorkflow consultationId={consultationId} />
         )}
 
       {/* SOAP Note Editor */}
@@ -599,313 +544,6 @@ function AudioPlayer({ consultationId }: { consultationId: string }) {
           </audio>
         )}
       </CardContent>
-    </Card>
-  );
-}
-
-function TranscriptViewer({ consultationId }: { consultationId: string }) {
-  const [expanded, setExpanded] = useState(false);
-
-  // In a real implementation, you'd fetch the actual transcript data
-  // For now, we'll show a placeholder that uses the normalized text from processing status
-  const { data: processingStatus } = useQuery({
-    queryKey: ["consultations", consultationId, "processing-status"],
-    queryFn: () => getProcessingStatusApi(consultationId),
-  });
-
-  if (!processingStatus?.has_english_transcript) return null;
-
-  return (
-    <Card className="animate-fade-in-up">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2.5 text-lg">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Languages className="size-4" aria-hidden />
-            </div>
-            Transcript & Normalized Text
-          </CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setExpanded(!expanded)}
-            className="gap-1.5"
-          >
-            {expanded ? (
-              <>
-                <ChevronUp className="size-4" />
-                Collapse
-              </>
-            ) : (
-              <>
-                <ChevronDown className="size-4" />
-                Expand
-              </>
-            )}
-          </Button>
-        </div>
-        <CardDescription>
-          Original transcription and English-normalized text for verification.
-        </CardDescription>
-      </CardHeader>
-      {expanded && (
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <FileText className="size-4 text-muted-foreground" />
-              <h4 className="text-sm font-medium">Original Transcript</h4>
-              <Badge variant="outline" className="text-xs">
-                Tamil
-              </Badge>
-            </div>
-            <div className="rounded-lg bg-muted/50 p-4 text-sm">
-              <p className="text-muted-foreground italic">
-                Original transcript will be displayed here after transcription
-                is complete.
-              </p>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Sparkles className="size-4 text-primary" />
-              <h4 className="text-sm font-medium">Normalized English Text</h4>
-              <Badge variant="outline" className="gap-1 text-xs">
-                <span className="size-1.5 rounded-full bg-success" />
-                Verified
-              </Badge>
-            </div>
-            <div className="rounded-lg border bg-card p-4 text-sm">
-              <p className="leading-relaxed">
-                English-normalized transcript will be displayed here for doctor
-                verification.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      )}
-    </Card>
-  );
-}
-
-function ClinicalExtractionCard({
-  extraction,
-}: {
-  extraction: ClinicalExtraction;
-}) {
-  const [expanded, setExpanded] = useState(true);
-
-  return (
-    <Card className="animate-fade-in-up border-primary/20">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2.5 text-lg">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Stethoscope className="size-4" aria-hidden />
-            </div>
-            Clinical Extraction (Draft)
-          </CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setExpanded(!expanded)}
-            className="gap-1.5"
-          >
-            {expanded ? (
-              <>
-                <ChevronUp className="size-4" />
-                Collapse
-              </>
-            ) : (
-              <>
-                <ChevronDown className="size-4" />
-                Expand
-              </>
-            )}
-          </Button>
-        </div>
-        <CardDescription>
-          AI-extracted clinical information. Please verify before approval.
-        </CardDescription>
-      </CardHeader>
-      {expanded && (
-        <CardContent className="space-y-4">
-          {extraction.chief_complaint && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">
-                Chief complaint:
-              </h4>
-              <p className="text-sm">{extraction.chief_complaint}</p>
-            </div>
-          )}
-
-          {extraction.symptoms.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">
-                Symptoms:
-              </h4>
-              <div className="space-y-2">
-                {extraction.symptoms.map((symptom, i) => (
-                  <div key={i} className="rounded-lg border bg-muted/30 p-3">
-                    <p className="text-sm font-medium">{symptom.name}</p>
-                    <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      {symptom.duration && (
-                        <span>Duration: {symptom.duration}</span>
-                      )}
-                      {symptom.severity && (
-                        <span>• Severity: {symptom.severity}</span>
-                      )}
-                      {symptom.onset && <span>• Onset: {symptom.onset}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {extraction.medical_conditions.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">
-                Medical conditions:
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {extraction.medical_conditions.map((condition, i) => (
-                  <Badge key={i} variant="secondary">
-                    {condition}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {extraction.medications_mentioned.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">
-                Medications mentioned:
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {extraction.medications_mentioned.map((med, i) => (
-                  <Badge key={i} variant="outline">
-                    {med}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {extraction.important_information.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">
-                Important information:
-              </h4>
-              <ul className="space-y-1 text-sm">
-                {extraction.important_information.map((item, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="text-primary">•</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {extraction.uncertainties.length > 0 && (
-            <div className="space-y-2 rounded-lg bg-warning/5 p-3">
-              <h4 className="text-sm font-medium text-warning">
-                Uncertainties (requires verification):
-              </h4>
-              <ul className="space-y-1 text-sm text-warning-foreground">
-                {extraction.uncertainties.map((item, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="text-warning">•</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </CardContent>
-      )}
-    </Card>
-  );
-}
-
-function DoctorSummaryCard({
-  summary,
-}: {
-  summary: {
-    summary: string;
-    source_references: string[];
-    provider: string;
-    model: string;
-  };
-}) {
-  const [expanded, setExpanded] = useState(true);
-
-  return (
-    <Card className="animate-fade-in-up">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2.5 text-lg">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <FileText className="size-4" aria-hidden />
-            </div>
-            Doctor-Facing Summary (Draft)
-          </CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setExpanded(!expanded)}
-            className="gap-1.5"
-          >
-            {expanded ? (
-              <>
-                <ChevronUp className="size-4" />
-                Collapse
-              </>
-            ) : (
-              <>
-                <ChevronDown className="size-4" />
-                Expand
-              </>
-            )}
-          </Button>
-        </div>
-        <CardDescription>
-          AI-generated summary combining patient context and visit comparison.
-        </CardDescription>
-      </CardHeader>
-      {expanded && (
-        <CardContent className="space-y-4">
-          <div className="rounded-lg border bg-card p-4">
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">
-              {summary.summary}
-            </p>
-          </div>
-
-          {summary.source_references.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Source references:
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {summary.source_references.map((ref, i) => (
-                  <Badge key={i} variant="outline" className="text-xs">
-                    {ref}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Sparkles className="size-3" />
-            Generated by {summary.provider} ({summary.model})
-          </div>
-        </CardContent>
-      )}
     </Card>
   );
 }

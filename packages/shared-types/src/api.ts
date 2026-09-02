@@ -527,6 +527,21 @@ export type VisitComparison = {
   changes: VisitChange[];
 };
 
+export type TranscriptResponse = {
+  transcript_id: string;
+  full_text: string;
+  provider: string;
+  language: string | null;
+  english_text: string | null;
+  english_provider: string | null;
+  english_model: string | null;
+  english_source_language: string | null;
+};
+
+export type UpdateEnglishTextRequest = {
+  english_text: string;
+};
+
 export type NormalizeResponse = {
   transcript_id: string;
   english_text: string;

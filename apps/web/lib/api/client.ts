@@ -71,6 +71,8 @@ export const api = {
     request<T>("GET", path, options),
   post: <T>(path: string, options?: RequestOptions) =>
     request<T>("POST", path, options),
+  put: <T>(path: string, options?: RequestOptions) =>
+    request<T>("PUT", path, options),
   patch: <T>(path: string, options?: RequestOptions) =>
     request<T>("PATCH", path, options),
   delete: <T>(path: string, options?: RequestOptions) =>

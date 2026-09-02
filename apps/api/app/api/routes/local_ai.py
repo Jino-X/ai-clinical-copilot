@@ -24,6 +24,8 @@ from app.schemas.clinical_extraction import (
     NormalizeResponse,
     ProcessingStage,
     ProcessingStatusResponse,
+    TranscriptResponse,
+    UpdateEnglishTextRequest,
 )
 from app.services.ai.clinical_extraction import ClinicalExtractionService
 from app.services.ai.comparison import VisitComparisonService
@@ -103,6 +105,121 @@ async def get_processing_status(
         has_english_transcript=has_english,
         has_extraction=has_extraction,
         has_summary=has_summary,
+    )
+
+
+# ===========================================================================
+# Transcript retrieval and editing
+# ===========================================================================
+
+
+@router.get(
+    "/{consultation_id}/transcript",
+    response_model=TranscriptResponse | None,
+    summary="Get the transcript for a consultation",
+)
+async def get_transcript(
+    consultation_id: UUID,
+    context: OrganizationDep,
+    connection: TenantConnection,
+) -> TranscriptResponse | None:
+    """Return the original transcript and English-normalized text (if any).
+
+    The doctor reviews both texts before proceeding with extraction.
+    The English text may be edited via PUT /{consultation_id}/transcript.
+    """
+    context.require(Permission.PATIENT_READ)
+
+    consultation = await _consultation_repo.get(
+        connection, consultation_id=consultation_id
+    )
+    if consultation is None:
+        raise NotFoundError("Consultation not found")
+
+    transcript = await _transcript_repo.get_by_consultation(
+        connection, consultation_id=consultation_id
+    )
+    if transcript is None:
+        return None
+
+    return TranscriptResponse(
+        transcript_id=transcript["id"],
+        full_text=transcript["full_text"],
+        provider=transcript["provider"],
+        language=transcript.get("language"),
+        english_text=transcript.get("english_text"),
+        english_provider=transcript.get("english_provider"),
+        english_model=transcript.get("english_model"),
+        english_source_language=transcript.get("english_source_language"),
+    )
+
+
+@router.put(
+    "/{consultation_id}/transcript",
+    response_model=TranscriptResponse,
+    summary="Update the English-normalized transcript (doctor edit)",
+)
+async def update_english_text(
+    consultation_id: UUID,
+    body: UpdateEnglishTextRequest,
+    context: AuditDep,
+    connection: TenantConnection,
+    database: DatabaseDep,
+    request: Request,
+) -> TranscriptResponse:
+    """Allow the doctor to edit the English-normalized transcript.
+
+    The original transcript (full_text) is never modified (PRD §4).
+    Only the english_text column is updated. The provider/model are
+    set to 'doctor' to indicate a manual edit.
+    """
+    context.require(Permission.CONSULTATION_CONDUCT)
+
+    consultation = await _consultation_repo.get(
+        connection, consultation_id=consultation_id
+    )
+    if consultation is None:
+        raise NotFoundError("Consultation not found")
+
+    transcript = await _transcript_repo.get_by_consultation(
+        connection, consultation_id=consultation_id
+    )
+    if transcript is None:
+        raise ConflictError("No transcript found. Transcribe the audio first.")
+
+    # Use a privileged connection for the update (RLS on transcripts).
+    async with database.privileged() as priv_conn:
+        updated = await _transcript_repo.update_english_text(
+            priv_conn,
+            transcript_id=transcript["id"],
+            english_text=body.english_text,
+            provider="doctor",
+            model="manual-edit",
+            source_language=transcript.get("english_source_language"),
+        )
+
+    await context.audit.record(
+        AuditAction.TRANSCRIPT_UPDATED,
+        actor_user_id=context.user.id,
+        organization_id=context.organization_id,
+        resource_type="transcript",
+        resource_id=str(transcript["id"]),
+        request=request,
+        metadata={"action": "english_text_edited"},
+    )
+
+    if updated is None:
+        raise NotFoundError("Transcript not found after update")
+
+    return TranscriptResponse(
+        transcript_id=updated["id"],
+        full_text=updated["full_text"],
+        provider=updated["provider"],
+        language=updated.get("language"),
+        english_text=updated.get("english_text"),
+        english_provider=updated.get("english_provider"),
+        english_model=updated.get("english_model"),
+        english_source_language=updated.get("english_source_language"),
     )
 
 

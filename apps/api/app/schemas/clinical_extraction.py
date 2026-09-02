@@ -183,6 +183,27 @@ class DoctorSummary(BaseModel):
 # --- API request/response schemas --------------------------------------------
 
 
+class TranscriptResponse(BaseModel):
+    """Full transcript data for doctor review."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    transcript_id: UUID
+    full_text: str
+    provider: str
+    language: str | None = None
+    english_text: str | None = None
+    english_provider: str | None = None
+    english_model: str | None = None
+    english_source_language: str | None = None
+
+
+class UpdateEnglishTextRequest(BaseModel):
+    """Doctor-edited English-normalized text."""
+
+    english_text: str
+
+
 class NormalizeResponse(BaseModel):
     """Result of English normalization."""
 

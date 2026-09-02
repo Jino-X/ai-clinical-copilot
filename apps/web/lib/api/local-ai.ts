@@ -6,6 +6,8 @@ import type {
   ExtractResponse,
   NormalizeResponse,
   ProcessingStatusResponse,
+  TranscriptResponse,
+  UpdateEnglishTextRequest,
 } from "@clinical-copilot/shared-types";
 
 import { api } from "@/lib/api/client";
@@ -98,4 +100,29 @@ export async function getSummaryApi(
   } catch {
     return null;
   }
+}
+
+export async function getTranscriptApi(
+  consultationId: string,
+): Promise<TranscriptResponse | null> {
+  const accessToken = await getAccessToken();
+  try {
+    return await api.get<TranscriptResponse>(
+      `/consultations/${consultationId}/transcript`,
+      { accessToken },
+    );
+  } catch {
+    return null;
+  }
+}
+
+export async function updateEnglishTextApi(
+  consultationId: string,
+  data: UpdateEnglishTextRequest,
+): Promise<TranscriptResponse> {
+  const accessToken = await getAccessToken();
+  return api.put<TranscriptResponse>(
+    `/consultations/${consultationId}/transcript`,
+    { body: data, accessToken },
+  );
 }
