@@ -283,6 +283,8 @@ async def extract_document(
         # directly. For images (JPG, PNG), OCR would be needed. For the MVP,
         # we decode text-based content; images require an OCR provider.
         extracted_text = _extract_text(content_bytes, content_type or doc.content_type)
+        # PostgreSQL text columns reject null bytes (0x00); strip them.
+        extracted_text = extracted_text.replace("\x00", "")
 
         if not extracted_text or not extracted_text.strip():
             # Could not extract text (e.g., image without OCR).
@@ -507,6 +509,6 @@ def _extract_docx_text(content: bytes) -> str:
                 if para_texts:
                     result.append("".join(para_texts))
 
-            return "\n".join(result)
+            return "\n".join(result).replace("\x00", "")
     except (zipfile.BadZipFile, KeyError, ET.ParseError):
         return ""
