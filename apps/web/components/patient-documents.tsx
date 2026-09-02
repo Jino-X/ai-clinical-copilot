@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { getPublicEnv } from "@/lib/env";
 import { ApiError } from "@/lib/api/client";
 import {
@@ -69,6 +70,8 @@ export function PatientDocuments({ patientId }: { patientId: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [deleteDocId, setDeleteDocId] = useState<string | null>(null);
+  const [deleteDocTitle, setDeleteDocTitle] = useState<string>("");
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ["documents", "patient", patientId],
@@ -135,6 +138,7 @@ export function PatientDocuments({ patientId }: { patientId: string }) {
         queryKey: ["documents", "patient", patientId],
       });
       toast.success("Document deleted");
+      setDeleteDocId(null);
     },
     onError: (e) =>
       toast.error(e instanceof ApiError ? e.message : "Could not delete"),
@@ -233,13 +237,8 @@ export function PatientDocuments({ patientId }: { patientId: string }) {
                     disabled={listDeleteMutation.isPending}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (
-                        window.confirm(
-                          `Delete "${doc.title}"? This cannot be undone.`,
-                        )
-                      ) {
-                        listDeleteMutation.mutate(doc.id);
-                      }
+                      setDeleteDocId(doc.id);
+                      setDeleteDocTitle(doc.title);
                     }}
                   >
                     <Trash2 className="size-4" aria-hidden />
@@ -250,6 +249,20 @@ export function PatientDocuments({ patientId }: { patientId: string }) {
           </div>
         )}
       </CardContent>
+      <ConfirmDialog
+        open={deleteDocId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteDocId(null);
+        }}
+        title="Delete document?"
+        description={`Delete "${deleteDocTitle}"? The file and all extracted data will be permanently removed. This cannot be undone.`}
+        confirmLabel="Delete"
+        destructive
+        pending={listDeleteMutation.isPending}
+        onConfirm={() => {
+          if (deleteDocId) listDeleteMutation.mutate(deleteDocId);
+        }}
+      />
     </Card>
   );
 }
@@ -266,6 +279,7 @@ function DocumentDetail({
   onBack: () => void;
 }) {
   const queryClient = useQueryClient();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: doc, isLoading } = useQuery({
     queryKey: ["documents", documentId],
@@ -308,6 +322,7 @@ function DocumentDetail({
       });
       queryClient.removeQueries({ queryKey: ["documents", documentId] });
       toast.success("Document deleted");
+      setShowDeleteDialog(false);
       onBack();
     },
     onError: (e) =>
@@ -391,15 +406,7 @@ function DocumentDetail({
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => {
-              if (
-                window.confirm(
-                  `Delete "${doc.title}"? This cannot be undone.`,
-                )
-              ) {
-                deleteMutation.mutate();
-              }
-            }}
+            onClick={() => setShowDeleteDialog(true)}
             disabled={deleteMutation.isPending}
           >
             {deleteMutation.isPending ? (
@@ -447,6 +454,16 @@ function DocumentDetail({
           </div>
         )}
       </CardContent>
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Delete document?"
+        description={`Delete "${doc.title}"? The file and all extracted data will be permanently removed. This cannot be undone.`}
+        confirmLabel="Delete"
+        destructive
+        pending={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate()}
+      />
     </Card>
   );
 }
