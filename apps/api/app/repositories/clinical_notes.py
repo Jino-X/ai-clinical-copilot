@@ -15,7 +15,7 @@ from app.schemas.clinical_notes import (
 
 _NOTE_COLUMNS = """
   id, organization_id, consultation_id, patient_id, status::text as status,
-  current_version, approved_by, approved_at,
+  current_version, approved_by, approved_at::text as approved_at,
   created_at::text as created_at, updated_at::text as updated_at
 """
 
