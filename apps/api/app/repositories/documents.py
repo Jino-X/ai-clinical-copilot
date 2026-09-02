@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from typing import Any
 from uuid import UUID
 
 import asyncpg
@@ -10,6 +12,29 @@ from app.schemas.documents import (
     MedicalDocumentResponse,
     MedicalDocumentSummary,
 )
+
+
+def _parse_doc_row(row: asyncpg.Record) -> dict[str, Any]:
+    """Convert an asyncpg Record to a dict, parsing JSONB strings to dicts.
+
+    asyncpg may return JSONB columns as JSON strings instead of dicts.
+    MedicalDocumentResponse expects extracted_data as a dict.
+    """
+    data = dict(row)
+    ed = data.get("extracted_data")
+    if isinstance(ed, str):
+        data["extracted_data"] = json.loads(ed)
+    return data
+
+
+def _validate_doc(
+    row: asyncpg.Record | None,
+) -> MedicalDocumentResponse | None:
+    """Validate a document row, returning None if the row is None."""
+    if row is None:
+        return None
+    return MedicalDocumentResponse.model_validate(_parse_doc_row(row))
+
 
 _DOC_COLUMNS = """
   id, organization_id, patient_id, uploaded_by, title, storage_path,
@@ -86,7 +111,7 @@ class DocumentRepository:
                 content_type,
                 file_size_bytes,
             )
-        return MedicalDocumentResponse.model_validate(dict(row))
+        return _validate_doc(row)
 
     async def get(
         self, connection: asyncpg.Connection, *, document_id: UUID
@@ -95,7 +120,7 @@ class DocumentRepository:
             f"select {_DOC_COLUMNS} from public.medical_documents where id = $1",
             document_id,
         )
-        return MedicalDocumentResponse.model_validate(dict(row)) if row else None
+        return _validate_doc(row)
 
     async def update(
         self,
@@ -117,7 +142,7 @@ class DocumentRepository:
             title,
             category.value if category else None,
         )
-        return MedicalDocumentResponse.model_validate(dict(row)) if row else None
+        return _validate_doc(row)
 
     async def update_status(
         self,
@@ -139,7 +164,7 @@ class DocumentRepository:
             status.value,
             error_message,
         )
-        return MedicalDocumentResponse.model_validate(dict(row)) if row else None
+        return _validate_doc(row)
 
     async def update_extraction(
         self,
@@ -152,8 +177,6 @@ class DocumentRepository:
         provider: str | None = None,
         model: str | None = None,
     ) -> MedicalDocumentResponse | None:
-        import json
-
         row = await connection.fetchrow(
             f"""
             update public.medical_documents
@@ -173,7 +196,7 @@ class DocumentRepository:
             provider,
             model,
         )
-        return MedicalDocumentResponse.model_validate(dict(row)) if row else None
+        return _validate_doc(row)
 
     async def verify(
         self,
@@ -184,8 +207,6 @@ class DocumentRepository:
         category: DocumentCategory | None = None,
         extracted_data: dict | None = None,
     ) -> MedicalDocumentResponse | None:
-        import json
-
         row = await connection.fetchrow(
             f"""
             update public.medical_documents
@@ -202,7 +223,7 @@ class DocumentRepository:
             category.value if category else None,
             json.dumps(extracted_data) if extracted_data else None,
         )
-        return MedicalDocumentResponse.model_validate(dict(row)) if row else None
+        return _validate_doc(row)
 
     async def list_for_patient(
         self,
