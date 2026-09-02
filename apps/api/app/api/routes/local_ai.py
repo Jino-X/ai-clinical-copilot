@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import time
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Request
@@ -37,6 +39,13 @@ _extraction_repo = ClinicalExtractionRepository()
 _summary_repo = DoctorSummaryRepository()
 _ai_repo = AiGenerationRepository()
 _context_builder = PatientContextBuilder()
+
+
+def _parse_jsonb(value: Any) -> Any:
+    """asyncpg may return JSONB columns as strings; normalize to dict."""
+    if isinstance(value, str):
+        return json.loads(value)
+    return value
 
 
 def _get_provider_factory(request: Request) -> ProviderFactory:
@@ -373,7 +382,7 @@ async def compare_visits(
         )
 
         current_extraction = ClinicalExtraction.model_validate(
-            extraction_row["extraction"]
+            _parse_jsonb(extraction_row["extraction"])
         )
 
         service = VisitComparisonService(factory.llm)
@@ -480,7 +489,7 @@ async def generate_summary(
         )
 
         current_extraction = ClinicalExtraction.model_validate(
-            extraction_row["extraction"]
+            _parse_jsonb(extraction_row["extraction"])
         )
 
         # Generate visit comparison first.
@@ -568,13 +577,9 @@ async def get_extraction(
     if row is None:
         return None
 
-    import json
-    
     # The extraction field is stored as JSONB but asyncpg returns it as a string
-    extraction_data = row["extraction"]
-    if isinstance(extraction_data, str):
-        extraction_data = json.loads(extraction_data)
-    
+    extraction_data = _parse_jsonb(row["extraction"])
+
     return ExtractResponse(
         extraction_id=row["id"],
         extraction=ClinicalExtraction.model_validate(extraction_data),
@@ -601,13 +606,9 @@ async def get_summary(
     if row is None:
         return None
 
-    import json
-    
     # source_references is stored as JSONB but asyncpg returns it as a string
-    source_refs = row["source_references"]
-    if isinstance(source_refs, str):
-        source_refs = json.loads(source_refs)
-    
+    source_refs = _parse_jsonb(row["source_references"])
+
     return DoctorSummaryResponse(
         summary=row["summary"],
         source_references=source_refs,
