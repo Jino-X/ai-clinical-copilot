@@ -36,8 +36,14 @@ An AI-powered clinical documentation assistant that reduces the time doctors spe
 - **🔍 Clinical Information Extraction**: Structured extraction of symptoms, conditions, medications from conversations
 - **📊 Visit Comparison**: Compare current visit with previous consultations to identify changes
 - **💡 Patient Summaries**: AI-generated patient summaries with source references
-- **🔎 RAG-based Search**: Vector similarity search across patient records with hybrid retrieval
-- **📄 Document Processing**: Upload, extract, and verify medical documents (lab reports, imaging, prescriptions)
+- **🔎 RAG-based Search**: Vector similarity search across patient records with hybrid retrieval (local nomic-embed-text embeddings)
+- **📄 Document Processing**: Upload, extract, verify, and delete medical documents (DOCX, PDF, TXT)
+
+### UI/UX
+- **✨ Smooth Animations**: Framer Motion-powered transitions, staggered list animations, tab transitions
+- **🎨 Enhanced Patient Detail**: Animated header with quick stats, color-coded timeline, summary mini-cards
+- **💀 Confirmation Dialogs**: Reusable confirm dialog for destructive actions (delete patient/document)
+- **⏳ Skeleton Loaders**: Loading state placeholders for better perceived performance
 
 ### Clinical Safety
 - **✅ Doctor Approval Required**: All AI output is a draft until explicitly approved
@@ -50,7 +56,7 @@ An AI-powered clinical documentation assistant that reduces the time doctors spe
 
 ## 🚀 Status
 
-**Current Phase**: Phase 8 Complete + Local AI Integration
+**Current Phase**: Phase 8 Complete + Local AI Integration + UI Enhancements
 
 ### ✅ Completed Features
 
@@ -60,10 +66,13 @@ An AI-powered clinical documentation assistant that reduces the time doctors spe
 - [x] **Phase 4**: Consultation sessions, consent tracking, audio recording, Supabase Storage
 - [x] **Phase 5**: AI transcription, SOAP generation, doctor editing/approval workflow
 - [x] **Phase 6**: Patient intelligence (summary, visit comparison, history Q&A)
-- [x] **Phase 7**: Medical document management (upload, extraction, verification)
+- [x] **Phase 7**: Medical document management (upload, extraction, verification, deletion)
 - [x] **Phase 8**: RAG (pgvector embeddings, hybrid retrieval, patient-scoped Q&A)
 - [x] **Local AI Integration**: IndicConformer STT, Ollama/Qwen3 8B, Tamil→English pipeline
+- [x] **Local Embeddings**: Ollama nomic-embed-text (768D) for fully local RAG
 - [x] **Doctor-Only Simplification**: Removed complex role system, simplified to doctor-only access
+- [x] **UI Enhancements**: Framer Motion animations, enhanced patient detail page, skeleton loaders
+- [x] **Document Deletion**: Full delete workflow (storage + DB + audit) with confirmation dialog
 
 ### 🔜 Next Phase
 
@@ -106,7 +115,8 @@ cd ../..
 
 # 5. Set up local AI (optional, for development)
 brew install ollama
-ollama pull qwen3:8b
+ollama pull qwen3:8b          # LLM for clinical extraction, SOAP notes
+ollama pull nomic-embed-text  # Embedding model for RAG search
 ollama serve  # Keep running in a separate terminal
 ```
 
@@ -176,6 +186,7 @@ npm run api:dev
 - **Language**: TypeScript 5
 - **UI**: React 19 + Tailwind CSS + shadcn/ui (Radix Nova)
 - **State**: TanStack Query (React Query)
+- **Animations**: Framer Motion (page transitions, staggered lists, tab animations)
 - **Forms**: React Hook Form + Zod
 - **Audio**: Browser MediaRecorder API
 
@@ -190,9 +201,10 @@ npm run api:dev
 ### AI/ML
 - **STT**: AI4Bharat IndicConformer (600M multilingual)
 - **LLM**: Ollama + Qwen3 8B (local inference)
-- **Embeddings**: OpenAI text-embedding-3-small (1536D)
+- **Embeddings**: Ollama nomic-embed-text (768D, local)
 - **Translation**: Ollama/Qwen3 (Tamil → English)
 - **Audio**: torchaudio, torchcodec, ffmpeg
+- **Document Extraction**: python-docx (DOCX), pypdf (PDF)
 
 ### Infrastructure
 - **Containerization**: Docker + Docker Compose
@@ -233,18 +245,22 @@ clinical-copilot/
 
 ### Local AI Setup
 
-For development without OpenAI API:
+For development without OpenAI API (fully local AI):
 
 ```bash
 # 1. Install and start Ollama
 brew install ollama
-ollama pull qwen3:8b
+ollama pull qwen3:8b          # LLM for extraction, SOAP, comparison
+ollama pull nomic-embed-text  # Embedding model for RAG (768D)
 ollama serve
 
 # 2. Configure apps/api/.env
 LLM_PROVIDER=ollama
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=qwen3:8b
+EMBEDDING_PROVIDER=ollama
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+OLLAMA_EMBEDDING_DIMENSIONS=768
 TRANSCRIPTION_PROVIDER=indicconformer
 INDICCONFORMER_LANGUAGE=ta
 TRANSLATION_PROVIDER=local

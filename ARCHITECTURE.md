@@ -57,9 +57,10 @@ Clinical Copilot is an AI-powered clinical documentation assistant designed to r
 ### AI/ML Stack
 - **STT (Speech-to-Text)**: AI4Bharat IndicConformer (600M multilingual)
 - **LLM**: Ollama + Qwen3 8B (local inference)
-- **Embeddings**: OpenAI text-embedding-3-small (1536 dimensions)
+- **Embeddings**: Ollama nomic-embed-text (768 dimensions, local)
 - **Translation**: Ollama/Qwen3 (Tamil → English)
 - **Audio Processing**: torchaudio, torchcodec, ffmpeg
+- **Document Extraction**: python-docx (DOCX), pypdf (PDF), built-in text readers
 
 ### Infrastructure
 - **Containerization**: Docker + Docker Compose
@@ -110,7 +111,7 @@ Clinical Copilot is an AI-powered clinical documentation assistant designed to r
 │  └────────────────────────┬─────────────────────────────────────┘  │
 │  ┌────────────────────────▼─────────────────────────────────────┐  │
 │  │                   Provider Layer (AI/External)                │  │
-│  │  • IndicConformerSTT  • OllamaLLM  • OpenAIEmbedding          │  │
+│  │  • IndicConformerSTT  • OllamaLLM  • OllamaEmbedding          │  │
 │  │  • LocalTranslation  • OpenAILLM (fallback)                   │  │
 │  └───────────────────────────────────────────────────────────────┘  │
 └────────────────────────────────────────────────────────────────────┘
@@ -121,8 +122,10 @@ Clinical Copilot is an AI-powered clinical documentation assistant designed to r
 │                      Local AI Services                              │
 │  ┌─────────────────┐              ┌──────────────────────────────┐ │
 │  │  Ollama Server  │              │  IndicConformer Model Cache  │ │
-│  │  (Qwen3 8B)     │              │  (~600MB, lazy-loaded)       │ │
-│  │  Port: 11434    │              │  HuggingFace Hub             │ │
+│  │  (Qwen3 8B,     │              │  (~600MB, lazy-loaded)       │ │
+│  │   nomic-embed-  │              │  HuggingFace Hub             │ │
+│  │   text)         │              │                              │ │
+│  │  Port: 11434    │              │                              │ │
 │  └─────────────────┘              └──────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────────┘
 ```
@@ -162,6 +165,10 @@ clinical-copilot/
 │   │   │   │   │   ├── base.py
 │   │   │   │   │   ├── ollama.py
 │   │   │   │   │   └── openai.py
+│   │   │   │   ├── embedding/        # Embedding providers
+│   │   │   │   │   ├── base.py
+│   │   │   │   │   ├── ollama.py     # nomic-embed-text (768D)
+│   │   │   │   │   └── openai.py     # text-embedding-3-small (1536D)
 │   │   │   │   ├── transcription/    # STT providers
 │   │   │   │   │   ├── base.py
 │   │   │   │   │   ├── indicconformer.py
@@ -230,9 +237,16 @@ clinical-copilot/
 │       │   └── layout.tsx
 │       ├── components/
 │       │   ├── ui/                   # shadcn/ui components
+│       │   ├── clinical/             # Clinical UI components
+│       │   │   ├── patient-avatar.tsx
+│       │   │   └── index.ts
 │       │   ├── ai-pipeline.tsx
+│       │   ├── confirm-dialog.tsx    # Reusable confirmation dialog
+│       │   ├── medical-history-card.tsx
 │       │   ├── patient-documents.tsx
+│       │   ├── patient-header.tsx    # Animated patient header
 │       │   ├── patient-intelligence.tsx
+│       │   ├── patient-timeline-enhanced.tsx
 │       │   ├── rag-search.tsx
 │       │   └── soap-note-editor.tsx
 │       ├── lib/
@@ -249,6 +263,7 @@ clinical-copilot/
 │       │   ├── supabase/
 │       │   │   ├── client.ts         # Browser client
 │       │   │   └── server.ts         # Server client
+│       │   ├── animations.ts         # Framer Motion variants
 │       │   ├── env.ts                # Environment validation
 │       │   └── utils.ts
 │       ├── proxy.ts                  # Next.js 16 middleware
@@ -285,7 +300,10 @@ clinical-copilot/
 │       ├── 20260830060000_rag.sql
 │       ├── 20260830070000_local_ai.sql
 │       ├── 20260901080000_simplify_roles.sql
-│       └── 20260901090000_fix_ai_generations_insert.sql
+│       ├── 20260901090000_fix_ai_generations_insert.sql
+│       ├── 20260901100000_consultation_soft_delete.sql
+│       ├── 20260902110000_document_delete_policy.sql
+│       └── 20260902120000_rag_ollama_dimensions.sql
 │
 ├── scripts/
 │   └── seed_test_data.py             # Test data seeding
@@ -491,7 +509,7 @@ record_embeddings
   ├── patient_id (uuid, FK)
   ├── record_type (consultation|clinical_note|document|...)
   ├── record_id (uuid)
-  ├── embedding (vector(1536))       -- pgvector
+  ├── embedding (vector(768))        -- pgvector (nomic-embed-text)
   ├── content_preview (text)
   └── RLS: organization_id, patient_id
   └── INDEX: HNSW (embedding vector_cosine_ops)
@@ -603,8 +621,10 @@ Patient-scoped tables also check `patient_id` ownership.
 - `GET /patients/{id}/documents` - List documents
 - `POST /patients/{id}/documents/upload-url` - Get signed upload URL
 - `POST /patients/{id}/documents/confirm` - Confirm document upload
-- `POST /documents/{id}/extract` - Extract text from document
+- `POST /documents/{id}/extract` - Extract text from document (DOCX, PDF, TXT)
+- `PATCH /documents/{id}` - Update document metadata
 - `POST /documents/{id}/verify` - Verify extracted information
+- `DELETE /documents/{id}` - Delete document (storage + DB record)
 
 #### RAG
 - `POST /rag/index` - Index patient records
@@ -651,6 +671,12 @@ app/
   - Modal/dialog state
   - Recording state
 
+- **Framer Motion**: UI animations
+  - Page transitions (fade + slide)
+  - Staggered list animations
+  - Card entrance animations
+  - Tab content transitions (AnimatePresence)
+
 ### Key Components
 
 #### `<SoapNoteEditor>`
@@ -673,16 +699,33 @@ app/
 - Medical history Q&A
 
 #### `<PatientDocuments>`
-- Document upload
-- Text extraction
-- Information verification
-- Timeline integration
+- Document upload (PDF, DOCX, JPG, PNG, TXT)
+- Text extraction (python-docx, pypdf)
+- AI classification and information extraction
+- Doctor verification workflow
+- Document deletion with confirmation dialog
 
 #### `<RagSearch>`
 - Vector similarity search
 - Source references
 - Similarity scores
 - Match type indicators
+
+#### `<PatientHeader>`
+- Animated gradient header with patient avatar
+- Quick stats (conditions, medications, allergies, visits)
+- Consultation start button
+- Delete patient action
+
+#### `<PatientTimelineEnhanced>`
+- Color-coded event types with icons
+- Vertical timeline with animated entries
+- Staggered entrance animations
+
+#### `<ConfirmDialog>`
+- Reusable Radix Dialog-based confirmation
+- Used for destructive actions (delete patient, delete document)
+- Loading state support
 
 ---
 
@@ -795,9 +838,10 @@ Text Extraction
     ├─ Document: extracted text
     │
     ▼
-OpenAI Embeddings (text-embedding-3-small)
+Ollama Embeddings (nomic-embed-text)
     │
-    ├─ 1536-dimensional vectors
+    ├─ 768-dimensional vectors
+    ├─ Local inference (no API key required)
     │
     ▼
 pgvector Storage
@@ -1208,6 +1252,6 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ---
 
-**Last Updated**: 2026-09-01  
-**Version**: 1.0.0  
-**Phases Completed**: 1-8 (Local AI Integration)
+**Last Updated**: 2026-09-02  
+**Version**: 1.1.0  
+**Phases Completed**: 1-8 (Local AI Integration + UI Enhancements)
