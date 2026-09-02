@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+import uuid
 from typing import Annotated
 from uuid import UUID
 
@@ -77,12 +78,9 @@ async def create_upload_url(
     storage = _get_storage_service(request)
 
     # Create the document record first so we have an ID for the storage path.
-    # The storage_path will be set after the upload completes, but we need
-    # the ID now to build the path. We create with a placeholder and update
-    # after the client confirms the upload.
-    import uuid as uuid_mod
-
-    document_id = uuid_mod.uuid4()
+    # We generate the UUID here so the storage_path (which includes the ID)
+    # matches the DB row ID exactly.
+    document_id = uuid.uuid4()
     storage_path = storage._document_storage_path(
         str(context.organization_id),
         str(document_id),
@@ -90,7 +88,7 @@ async def create_upload_url(
     )
     full_storage_path = f"medical-documents/{storage_path}"
 
-    # Create the document record.
+    # Create the document record with the pre-generated ID.
     doc = await _repo.create(
         connection,
         organization_id=context.organization_id,
@@ -101,6 +99,7 @@ async def create_upload_url(
         file_name=payload.file_name,
         content_type=payload.content_type,
         file_size_bytes=payload.file_size_bytes,
+        document_id=document_id,
     )
 
     # Now create the signed upload URL.

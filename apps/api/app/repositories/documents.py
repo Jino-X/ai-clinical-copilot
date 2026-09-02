@@ -47,24 +47,45 @@ class DocumentRepository:
         file_name: str,
         content_type: str,
         file_size_bytes: int,
+        document_id: UUID | None = None,
     ) -> MedicalDocumentResponse:
-        row = await connection.fetchrow(
-            f"""
-            insert into public.medical_documents
-              (organization_id, patient_id, uploaded_by, title, storage_path,
-               file_name, content_type, file_size_bytes)
-            values ($1, $2, $3, $4, $5, $6, $7, $8)
-            returning {_DOC_COLUMNS}
-            """,
-            organization_id,
-            patient_id,
-            uploaded_by,
-            title,
-            storage_path,
-            file_name,
-            content_type,
-            file_size_bytes,
-        )
+        if document_id is not None:
+            row = await connection.fetchrow(
+                f"""
+                insert into public.medical_documents
+                  (id, organization_id, patient_id, uploaded_by, title,
+                   storage_path, file_name, content_type, file_size_bytes)
+                values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                returning {_DOC_COLUMNS}
+                """,
+                document_id,
+                organization_id,
+                patient_id,
+                uploaded_by,
+                title,
+                storage_path,
+                file_name,
+                content_type,
+                file_size_bytes,
+            )
+        else:
+            row = await connection.fetchrow(
+                f"""
+                insert into public.medical_documents
+                  (organization_id, patient_id, uploaded_by, title, storage_path,
+                   file_name, content_type, file_size_bytes)
+                values ($1, $2, $3, $4, $5, $6, $7, $8)
+                returning {_DOC_COLUMNS}
+                """,
+                organization_id,
+                patient_id,
+                uploaded_by,
+                title,
+                storage_path,
+                file_name,
+                content_type,
+                file_size_bytes,
+            )
         return MedicalDocumentResponse.model_validate(dict(row))
 
     async def get(
