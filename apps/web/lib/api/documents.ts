@@ -102,3 +102,10 @@ export async function verifyDocumentApi(
     { accessToken, body: data },
   );
 }
+
+export async function deleteDocumentApi(
+  documentId: string,
+): Promise<void> {
+  const accessToken = await getAccessToken();
+  await api.delete<void>(`/documents/${documentId}`, { accessToken });
+}

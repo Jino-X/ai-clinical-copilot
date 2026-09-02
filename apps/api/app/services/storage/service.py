@@ -294,3 +294,32 @@ class StorageService:
             raise ServiceUnavailableError("Could not download document")
 
         return response.content, signed.content_type
+
+    async def delete_object(self, *, storage_path: str) -> None:
+        """Delete an object from private storage.
+
+        storage_path is stored as "bucket/path"; split for the API call.
+        Best-effort: if the object is already gone, we don't raise.
+        """
+        if not self.configured:
+            return
+
+        parts = storage_path.split("/", 1)
+        if len(parts) != 2:
+            return
+        bucket, object_path = parts
+
+        url = (
+            f"{self._base_url}/storage/v1/object/{quote(bucket)}/"
+            f"{quote(object_path)}"
+        )
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.delete(url, headers=self._headers())
+
+        if response.status_code not in (200, 204, 404):
+            logger.error(
+                "storage_delete_failed",
+                status=response.status_code,
+                bucket=bucket,
+                error_type="http_error",
+            )

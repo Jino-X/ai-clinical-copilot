@@ -225,6 +225,26 @@ class DocumentRepository:
         )
         return _validate_doc(row)
 
+    async def delete(
+        self,
+        connection: asyncpg.Connection,
+        *,
+        document_id: UUID,
+    ) -> str | None:
+        """Delete a document row. Returns its storage_path if deleted, else None.
+
+        The caller is responsible for removing the object from Supabase
+        Storage using the returned path.
+        """
+        row = await connection.fetchrow(
+            "delete from public.medical_documents where id = $1 "
+            "returning storage_path",
+            document_id,
+        )
+        if row is None:
+            return None
+        return row["storage_path"]
+
     async def list_for_patient(
         self,
         connection: asyncpg.Connection,

@@ -11,6 +11,7 @@ import {
   CheckCircle,
   Download,
   AlertCircle,
+  Trash2,
 } from "lucide-react";
 import type {
   DocumentCategory,
@@ -32,6 +33,7 @@ import { getPublicEnv } from "@/lib/env";
 import { ApiError } from "@/lib/api/client";
 import {
   createUploadUrlApi,
+  deleteDocumentApi,
   extractDocumentApi,
   getDocumentApi,
   getDocumentDownloadUrlApi,
@@ -126,6 +128,18 @@ export function PatientDocuments({ patientId }: { patientId: string }) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const listDeleteMutation = useMutation({
+    mutationFn: (docId: string) => deleteDocumentApi(docId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["documents", "patient", patientId],
+      });
+      toast.success("Document deleted");
+    },
+    onError: (e) =>
+      toast.error(e instanceof ApiError ? e.message : "Could not delete"),
+  });
+
   if (selectedDocId) {
     return (
       <DocumentDetail
@@ -185,29 +199,52 @@ export function PatientDocuments({ patientId }: { patientId: string }) {
             {documents.map((doc) => {
               const config = STATUS_CONFIG[doc.status];
               return (
-                <button
+                <div
                   key={doc.id}
-                  onClick={() => setSelectedDocId(doc.id)}
-                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-muted"
+                  className="group flex w-full items-center gap-3 rounded-md px-3 py-2 hover:bg-muted"
                 >
-                  <FileText
-                    className="size-4 text-muted-foreground"
-                    aria-hidden
-                  />
-                  <div className="flex-1 space-y-0.5">
-                    <p className="text-sm font-medium">{doc.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {doc.file_name} ·{" "}
-                      {new Date(doc.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  {doc.category && (
-                    <Badge variant="outline" className="text-xs">
-                      {CATEGORY_LABELS[doc.category]}
-                    </Badge>
-                  )}
-                  <Badge variant={config.variant}>{config.label}</Badge>
-                </button>
+                  <button
+                    onClick={() => setSelectedDocId(doc.id)}
+                    className="flex flex-1 items-center gap-3 text-left"
+                  >
+                    <FileText
+                      className="size-4 text-muted-foreground"
+                      aria-hidden
+                    />
+                    <div className="flex-1 space-y-0.5">
+                      <p className="text-sm font-medium">{doc.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {doc.file_name} ·{" "}
+                        {new Date(doc.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    {doc.category && (
+                      <Badge variant="outline" className="text-xs">
+                        {CATEGORY_LABELS[doc.category]}
+                      </Badge>
+                    )}
+                    <Badge variant={config.variant}>{config.label}</Badge>
+                  </button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                    aria-label={`Delete ${doc.title}`}
+                    disabled={listDeleteMutation.isPending}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (
+                        window.confirm(
+                          `Delete "${doc.title}"? This cannot be undone.`,
+                        )
+                      ) {
+                        listDeleteMutation.mutate(doc.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </Button>
+                </div>
               );
             })}
           </div>
@@ -261,6 +298,20 @@ function DocumentDetail({
     },
     onError: (e) =>
       toast.error(e instanceof ApiError ? e.message : "Could not verify"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteDocumentApi(documentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["documents", "patient", patientId],
+      });
+      queryClient.removeQueries({ queryKey: ["documents", documentId] });
+      toast.success("Document deleted");
+      onBack();
+    },
+    onError: (e) =>
+      toast.error(e instanceof ApiError ? e.message : "Could not delete"),
   });
 
   const handleDownload = async () => {
@@ -337,6 +388,27 @@ function DocumentDetail({
               {verifyMutation.isPending ? "Verifying…" : "Verify"}
             </Button>
           )}
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              if (
+                window.confirm(
+                  `Delete "${doc.title}"? This cannot be undone.`,
+                )
+              ) {
+                deleteMutation.mutate();
+              }
+            }}
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Trash2 className="size-4" aria-hidden />
+            )}
+            {deleteMutation.isPending ? "Deleting…" : "Delete"}
+          </Button>
         </div>
 
         {doc.error_message && (

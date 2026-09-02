@@ -5,10 +5,11 @@ import uuid
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Query, Request, status
 
 from app.api.deps import AuditDep, DatabaseDep, OrganizationDep, TenantConnection
 from app.core.errors import NotFoundError, ServiceUnavailableError
+from app.core.logging import get_logger
 from app.core.permissions import Permission
 from app.providers.factory import ProviderFactory
 from app.repositories.ai_generations import AiGenerationRepository
@@ -33,6 +34,8 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 
 _repo = DocumentRepository()
 _patient_repo = PatientRepository()
+
+logger = get_logger(__name__)
 _ai_repo = AiGenerationRepository()
 
 
@@ -186,6 +189,42 @@ async def get_document(
         request=request,
     )
     return doc
+
+
+@router.delete(
+    "/{document_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a document",
+)
+async def delete_document(
+    document_id: UUID,
+    context: OrganizationDep,
+    connection: TenantConnection,
+    audit: AuditDep,
+    request: Request,
+) -> None:
+    context.require(Permission.PATIENT_WRITE)
+    storage_path = await _repo.delete(connection, document_id=document_id)
+    if storage_path is None:
+        raise NotFoundError("Document not found")
+
+    # Best-effort storage cleanup — don't fail the request if the object
+    # is already gone or storage is not configured.
+    storage = _get_storage_service(request)
+    try:
+        await storage.delete_object(storage_path=storage_path)
+    except Exception:
+        # Log only the exception type, never the path (may contain PHI).
+        logger.warning("document_storage_delete_failed", error_type="storage")
+
+    await audit.record(
+        AuditAction.DOCUMENT_DELETED,
+        actor_user_id=context.user.id,
+        organization_id=context.organization_id,
+        resource_type="document",
+        resource_id=str(document_id),
+        request=request,
+    )
 
 
 # ===========================================================================
