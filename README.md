@@ -96,8 +96,8 @@ An AI-powered clinical documentation assistant that reduces the time doctors spe
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-org/clinical-copilot.git
-cd clinical-copilot
+git clone https://github.com/Jino-X/ai-clinical-copilot.git
+cd ai-clinical-copilot
 
 # 2. Install frontend dependencies (npm workspaces)
 npm install
@@ -154,23 +154,23 @@ npm run api:dev
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         Browser (Client)                         │
+│                         Browser (Client)                        │
 │  Next.js 16 + React 19 + TanStack Query + shadcn/ui             │
 └────────────────────────┬────────────────────────────────────────┘
                          │ HTTPS/REST + WebSocket (future)
 ┌────────────────────────▼────────────────────────────────────────┐
-│                    Supabase Platform                             │
+│                    Supabase Platform                            │
 │  Auth (JWT) + PostgreSQL (RLS) + Storage (S3-like) + pgvector   │
 └────────────────────────┬────────────────────────────────────────┘
                          │ JWT Verification (JWKS)
 ┌────────────────────────▼────────────────────────────────────────┐
-│                  FastAPI Backend (Python 3.13)                   │
-│  Routes → Services → Repositories → Database                     │
+│                  FastAPI Backend (Python 3.13)                  │
+│  Routes → Services → Repositories → Database                    │
 │  AI Providers: IndicConformer STT + Ollama/Qwen3 LLM            │
 └────────────────────────┬────────────────────────────────────────┘
                          │ HTTP (local)
 ┌────────────────────────▼────────────────────────────────────────┐
-│                    Local AI Services                             │
+│                    Local AI Services                            │
 │  Ollama (Qwen3 8B) + IndicConformer (600M multilingual)         │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -346,7 +346,6 @@ cd apps/api
 **Test Patients:**
 - Murugan Subramanian (with conditions, medications, allergies)
 - Kavitha Ramanathan
-- Anbu Arumugam
 
 ---
 
@@ -373,14 +372,11 @@ cd apps/api
 5. **Approved clinical notes are append-only** — changes create new versions
 6. **Original audio and transcripts are never overwritten**
 
-> ⚠️ **Important**: Security features alone do not constitute regulatory compliance. See [PRD.md](./PRD.md) §20 before using with real patient data.
-
 ---
 
 ## 📚 Documentation
 
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Comprehensive system architecture, data flow, and design decisions
-- **[PRD.md](./PRD.md)** - Product requirements document (authoritative specification)
 - **[AGENTS.md](./AGENTS.md)** - Development notes, commands, and working conventions
 - **[API Docs](http://localhost:8000/docs)** - Interactive API documentation (when running locally)
 
@@ -416,12 +412,6 @@ This is a private project. For team members:
 
 ---
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
----
-
 ## 🙏 Acknowledgments
 
 - **AI4Bharat** for IndicConformer multilingual STT model
@@ -437,7 +427,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 For questions or issues:
 - Check [ARCHITECTURE.md](./ARCHITECTURE.md) for technical details
-- Review [PRD.md](./PRD.md) for product requirements
 - See [AGENTS.md](./AGENTS.md) for development notes
 
 ---
