@@ -41,7 +41,10 @@ class SoapNoteContent(BaseModel):
 class SoapNoteResponse(SoapNoteContent):
     """SOAP note content with version metadata."""
 
-    model_config = ConfigDict(from_attributes=True)
+    # The DB row includes id, organization_id, and clinical_note_id which
+    # are not part of the SOAP content. Allow (and ignore) extra fields so
+    # model_validate(dict(row)) works without manual filtering.
+    model_config = ConfigDict(from_attributes=True, extra="ignore")
 
     version: int
     source: NoteVersionSource

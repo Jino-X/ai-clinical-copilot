@@ -104,7 +104,7 @@ class PatientContextBuilder:
             lines = ["Recent consultations:"]
             for c in consultations:
                 lines.append(
-                    f"  - {c.created_at[:10]}: "
+                    f"  - {c.created_at.strftime('%Y-%m-%d')}: "
                     f"{c.chief_complaint or 'No chief complaint'} "
                     f"(status: {c.status})"
                 )
@@ -118,7 +118,7 @@ class PatientContextBuilder:
                 if note and note.latest_version:
                     v = note.latest_version
                     lines = [
-                        f"Clinical note for {c.created_at[:10]} "
+                        f"Clinical note for {c.created_at.strftime('%Y-%m-%d')} "
                         f"(version {v.version}, status: {note.status}):",
                     ]
                     if v.subjective:
@@ -149,7 +149,7 @@ class PatientContextBuilder:
             return "Consultation not found."
 
         sections: list[str] = [
-            f"Consultation date: {consultation.created_at[:10]}",
+            f"Consultation date: {consultation.created_at.strftime('%Y-%m-%d')}",
             f"Chief complaint: {consultation.chief_complaint or 'Not recorded'}",
             f"Status: {consultation.status}",
         ]
