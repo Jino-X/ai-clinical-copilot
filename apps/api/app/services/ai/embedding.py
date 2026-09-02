@@ -49,7 +49,7 @@ class EmbeddingService:
             connection, patient_id=patient_id
         )
         for c in conditions:
-            text = f"Condition: {c.condition_name}"
+            text = f"Condition: {c.name}"
             if c.status:
                 text += f" (status: {c.status})"
             if c.notes:
@@ -60,7 +60,7 @@ class EmbeddingService:
                 patient_id=patient_id,
                 source_type="condition",
                 source_id=c.id,
-                source_label=f"Condition: {c.condition_name}",
+                source_label=f"Condition: {c.name}",
                 chunk_text=text,
             )
             count += 1
@@ -70,7 +70,7 @@ class EmbeddingService:
             connection, patient_id=patient_id
         )
         for m in medications:
-            text = f"Medication: {m.medication_name}"
+            text = f"Medication: {m.name}"
             if m.dosage:
                 text += f" (dosage: {m.dosage})"
             if m.status:
@@ -81,7 +81,7 @@ class EmbeddingService:
                 patient_id=patient_id,
                 source_type="medication",
                 source_id=m.id,
-                source_label=f"Medication: {m.medication_name}",
+                source_label=f"Medication: {m.name}",
                 chunk_text=text,
             )
             count += 1
@@ -112,7 +112,8 @@ class EmbeddingService:
             connection, patient_id=patient_id, limit=50
         )
         for c in consultations:
-            text = f"Consultation on {c.created_at[:10]}: "
+            date_str = c.created_at.strftime("%Y-%m-%d")
+            text = f"Consultation on {date_str}: "
             text += c.chief_complaint or "No chief complaint recorded"
             if c.status:
                 text += f" (status: {c.status})"
@@ -122,7 +123,7 @@ class EmbeddingService:
                 patient_id=patient_id,
                 source_type="consultation",
                 source_id=c.id,
-                source_label=f"Consultation {c.created_at[:10]}",
+                source_label=f"Consultation {date_str}",
                 chunk_text=text,
             )
             count += 1
@@ -146,13 +147,14 @@ class EmbeddingService:
                 if v.follow_up:
                     parts.append(f"Follow-up: {v.follow_up}")
                 text = " ".join(parts)
+                date_str = c.created_at.strftime("%Y-%m-%d")
                 await self._store_embedding(
                     connection,
                     organization_id=organization_id,
                     patient_id=patient_id,
                     source_type="clinical_note",
                     source_id=note.id,
-                    source_label=f"Clinical note for {c.created_at[:10]}",
+                    source_label=f"Clinical note for {date_str}",
                     chunk_text=text,
                 )
                 count += 1
