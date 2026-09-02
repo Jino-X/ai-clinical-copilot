@@ -493,22 +493,22 @@ def _extract_docx_text(content: bytes) -> str:
     try:
         with zipfile.ZipFile(io.BytesIO(content)) as zf:
             # Read the main document content.
-            with zf.read("word/document.xml") as xml_bytes:
-                # DOCX is a controlled upload from an authenticated doctor,
-                # not arbitrary external XML. defusedxml is not available.
-                root = ET.fromstring(xml_bytes)  # noqa: S314
+            xml_bytes = zf.read("word/document.xml")
+            # DOCX is a controlled upload from an authenticated doctor,
+            # not arbitrary external XML. defusedxml is not available.
+            root = ET.fromstring(xml_bytes)  # noqa: S314
 
-            # Extract text from <w:t> elements, grouped by paragraph <w:p>.
-            w_ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
-            result: list[str] = []
-            for p in root.iter(f"{w_ns}p"):
-                para_texts: list[str] = []
-                for t in p.iter(f"{w_ns}t"):
-                    if t.text:
-                        para_texts.append(t.text)
-                if para_texts:
-                    result.append("".join(para_texts))
+        # Extract text from <w:t> elements, grouped by paragraph <w:p>.
+        w_ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+        result: list[str] = []
+        for p in root.iter(f"{w_ns}p"):
+            para_texts: list[str] = []
+            for t in p.iter(f"{w_ns}t"):
+                if t.text:
+                    para_texts.append(t.text)
+            if para_texts:
+                result.append("".join(para_texts))
 
-            return "\n".join(result).replace("\x00", "")
+        return "\n".join(result).replace("\x00", "")
     except (zipfile.BadZipFile, KeyError, ET.ParseError):
         return ""
