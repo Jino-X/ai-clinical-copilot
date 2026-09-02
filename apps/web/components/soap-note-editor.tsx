@@ -274,7 +274,7 @@ export function SoapNoteEditor({
           {note.status === "approved" && note.approved_at && (
             <div className="flex items-center gap-2.5 rounded-lg bg-success/10 p-3.5 text-sm">
               <CheckCircle className="size-4 shrink-0 text-success" aria-hidden />
-              <span className="text-success-foreground">
+              <span className="text-primary">
                 Approved on {new Date(note.approved_at).toLocaleString()}
               </span>
             </div>
