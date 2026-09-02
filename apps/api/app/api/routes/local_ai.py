@@ -162,9 +162,10 @@ async def get_transcript(
 async def update_english_text(
     consultation_id: UUID,
     body: UpdateEnglishTextRequest,
-    context: AuditDep,
+    context: OrganizationDep,
     connection: TenantConnection,
     database: DatabaseDep,
+    audit: AuditDep,
     request: Request,
 ) -> TranscriptResponse:
     """Allow the doctor to edit the English-normalized transcript.
@@ -198,7 +199,7 @@ async def update_english_text(
             source_language=transcript.get("english_source_language"),
         )
 
-    await context.audit.record(
+    await audit.record(
         AuditAction.TRANSCRIPT_UPDATED,
         actor_user_id=context.user.id,
         organization_id=context.organization_id,
