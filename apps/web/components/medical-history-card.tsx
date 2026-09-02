@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus, Trash2, AlertCircle, Pill, Activity } from "lucide-react";
+import { Plus, Trash2, AlertCircle, Pill } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -129,12 +129,12 @@ export function MedicalHistoryCard({
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium">{item.name}</h4>
                       {item.status && (
-                        <Badge variant={STATUS_COLORS[item.status] as any}>
+                        <Badge variant={STATUS_COLORS[item.status] as "default" | "secondary" | "destructive" | "outline"}>
                           {item.status}
                         </Badge>
                       )}
                       {item.severity && (
-                        <Badge variant={STATUS_COLORS[item.severity] as any}>
+                        <Badge variant={STATUS_COLORS[item.severity] as "default" | "secondary" | "destructive" | "outline"}>
                           {item.severity}
                         </Badge>
                       )}

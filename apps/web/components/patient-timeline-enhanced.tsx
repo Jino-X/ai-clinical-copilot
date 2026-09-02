@@ -10,6 +10,7 @@ import {
   Calendar,
   AlertCircle,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { TimelineEventResponse, TimelineEventType } from "@clinical-copilot/shared-types";
 
 import {
@@ -23,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { staggerContainer, staggerItem } from "@/lib/animations";
 
-const EVENT_ICONS: Record<TimelineEventType, any> = {
+const EVENT_ICONS: Record<TimelineEventType, LucideIcon> = {
   consultation: Stethoscope,
   diagnosis: Activity,
   medication: Pill,
