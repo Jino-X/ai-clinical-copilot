@@ -4,6 +4,7 @@ from app.core.config import Settings
 from app.core.errors import ServiceUnavailableError
 from app.core.logging import get_logger
 from app.providers.embedding.base import EmbeddingProvider
+from app.providers.embedding.ollama import OllamaEmbeddingProvider
 from app.providers.embedding.openai import OpenAIEmbeddingProvider
 from app.providers.llm.base import LLMProvider
 from app.providers.llm.ollama import OllamaLLMProvider
@@ -94,6 +95,8 @@ class ProviderFactory:
 
         if provider_name == "openai":
             self._embedding = OpenAIEmbeddingProvider(self._settings)
+        elif provider_name == "ollama":
+            self._embedding = OllamaEmbeddingProvider(self._settings)
         else:
             raise ServiceUnavailableError(f"Unknown embedding provider: {provider_name}")
 

@@ -73,6 +73,9 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "qwen3:8b"
     ollama_timeout_seconds: int = 120
+    # Ollama embedding model (nomic-embed-text, 768 dims).
+    ollama_embedding_model: str = "nomic-embed-text"
+    ollama_embedding_dimensions: int = 768
     # IndicConformer (local STT, AI4Bharat). Server-side only.
     indicconformer_model: str = "ai4bharat/indic-conformer-600m-multilingual"
     indicconformer_language: str = "ta"
