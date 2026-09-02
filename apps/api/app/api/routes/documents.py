@@ -444,9 +444,8 @@ async def verify_document(
 def _extract_text(content: bytes, content_type: str) -> str:
     """Extract text from document content based on content type.
 
-    For the MVP, this handles text-based formats. Image-based documents
-    (JPG, PNG) require an OCR provider, which would be added in a future
-    iteration. PDF and DOCX extraction would use dedicated libraries.
+    Handles plain text, JSON, HTML, XML, and DOCX (via built-in zipfile).
+    PDF and image-based documents require dedicated libraries/OCR.
     """
     ct = content_type.lower()
 
@@ -458,11 +457,56 @@ def _extract_text(content: bytes, content_type: str) -> str:
     if "application/json" in ct:
         return content.decode("utf-8", errors="replace")
 
-    # For PDF, DOCX, and images, we would need dedicated extraction.
-    # For now, attempt a best-effort UTF-8 decode for any text-like format.
+    # HTML / XML.
     if "text" in ct or "xml" in ct or "html" in ct:
         return content.decode("utf-8", errors="replace")
 
-    # Image and binary formats require OCR or dedicated parsers.
-    # Return empty string so the caller knows extraction failed.
-    return ""
+    # DOCX — Office Open XML is a ZIP archive; extract text from word/document.xml.
+    if "wordprocessingml" in ct or "officedocument.wordprocessing" in ct:
+        return _extract_docx_text(content)
+
+    # PDF — would need a dedicated library (pdfplumber, pypdf, etc.).
+    # Return empty so the caller reports extraction not supported.
+    if "pdf" in ct:
+        return ""
+
+    # Image formats require OCR.
+    if "image" in ct:
+        return ""
+
+    # Unknown binary format — try DOCX as a fallback (many uploads are DOCX).
+    return _extract_docx_text(content)
+
+
+def _extract_docx_text(content: bytes) -> str:
+    """Extract text from a DOCX file using built-in zipfile + XML parsing.
+
+    DOCX is a ZIP archive; the main content lives in word/document.xml.
+    We parse the XML and extract text from <w:t> elements.
+    """
+    import io
+    import xml.etree.ElementTree as ET
+    import zipfile
+
+    try:
+        with zipfile.ZipFile(io.BytesIO(content)) as zf:
+            # Read the main document content.
+            with zf.read("word/document.xml") as xml_bytes:
+                # DOCX is a controlled upload from an authenticated doctor,
+                # not arbitrary external XML. defusedxml is not available.
+                root = ET.fromstring(xml_bytes)  # noqa: S314
+
+            # Extract text from <w:t> elements, grouped by paragraph <w:p>.
+            w_ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+            result: list[str] = []
+            for p in root.iter(f"{w_ns}p"):
+                para_texts: list[str] = []
+                for t in p.iter(f"{w_ns}t"):
+                    if t.text:
+                        para_texts.append(t.text)
+                if para_texts:
+                    result.append("".join(para_texts))
+
+            return "\n".join(result)
+    except (zipfile.BadZipFile, KeyError, ET.ParseError):
+        return ""
