@@ -106,9 +106,15 @@ export function SoapNoteEditor({
 
   const generateSoapMutation = useMutation({
     mutationFn: () => generateSoapApi(consultationId),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Set the response directly into the cache so the note appears
+      // immediately without waiting for a refetch.
+      queryClient.setQueryData(
+        ["clinical-notes", "consultation", consultationId],
+        data,
+      );
       queryClient.invalidateQueries({
-        queryKey: ["clinical-notes", "consultation", consultationId],
+        queryKey: ["clinical-notes", note?.id, "versions"],
       });
       toast.success("SOAP note draft generated");
     },

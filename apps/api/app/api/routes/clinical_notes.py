@@ -100,6 +100,23 @@ async def list_note_versions(
     return await _note_repo.list_versions(connection, note_id=note_id)
 
 
+@router.get(
+    "/consultations/{consultation_id}",
+    response_model=ClinicalNoteResponse | None,
+    summary="Get the clinical note for a consultation",
+)
+async def get_note_by_consultation(
+    consultation_id: UUID,
+    context: OrganizationDep,
+    connection: TenantConnection,
+) -> ClinicalNoteResponse | None:
+    """Return the clinical note associated with a consultation, or null."""
+    context.require(Permission.PATIENT_READ)
+    return await _note_repo.get_by_consultation(
+        connection, consultation_id=consultation_id
+    )
+
+
 # ===========================================================================
 # Transcription
 # ===========================================================================
