@@ -12,3 +12,6 @@ cryptography==50.0.0
 # Backs pydantic's EmailStr. Email is how a member is invited, so a typo must
 # fail validation rather than create an unreachable membership.
 email-validator==2.3.0
+
+python-docx==1.2.0
+pypdf==6.16.2

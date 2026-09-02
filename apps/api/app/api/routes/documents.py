@@ -446,69 +446,81 @@ async def verify_document(
 def _extract_text(content: bytes, content_type: str) -> str:
     """Extract text from document content based on content type.
 
-    Handles plain text, JSON, HTML, XML, and DOCX (via built-in zipfile).
-    PDF and image-based documents require dedicated libraries/OCR.
+    Handles TXT, JSON, HTML, XML, DOCX (via python-docx), and PDF (via pypdf).
+    Image-based documents (JPG, PNG) require OCR and are not supported yet.
     """
     ct = content_type.lower()
 
     # Plain text.
     if "text/plain" in ct:
-        return content.decode("utf-8", errors="replace")
+        return content.decode("utf-8", errors="replace").replace("\x00", "")
 
     # JSON (some APIs return structured data as JSON).
     if "application/json" in ct:
-        return content.decode("utf-8", errors="replace")
+        return content.decode("utf-8", errors="replace").replace("\x00", "")
 
-    # HTML / XML.
-    if "text" in ct or "xml" in ct or "html" in ct:
-        return content.decode("utf-8", errors="replace")
+    # HTML / XML — but NOT Office Open XML (DOCX), which is a ZIP.
+    if ("text" in ct or "html" in ct) and "officedocument" not in ct:
+        return content.decode("utf-8", errors="replace").replace("\x00", "")
 
-    # DOCX — Office Open XML is a ZIP archive; extract text from word/document.xml.
+    # DOCX — use python-docx for reliable text extraction.
     if "wordprocessingml" in ct or "officedocument.wordprocessing" in ct:
         return _extract_docx_text(content)
 
-    # PDF — would need a dedicated library (pdfplumber, pypdf, etc.).
-    # Return empty so the caller reports extraction not supported.
+    # PDF — use pypdf for text extraction.
     if "pdf" in ct:
-        return ""
+        return _extract_pdf_text(content)
 
-    # Image formats require OCR.
+    # Image formats require OCR — not supported yet.
     if "image" in ct:
         return ""
 
-    # Unknown binary format — try DOCX as a fallback (many uploads are DOCX).
-    return _extract_docx_text(content)
+    # Unknown binary format — try DOCX first (most common), then PDF.
+    text = _extract_docx_text(content)
+    if text:
+        return text
+    return _extract_pdf_text(content)
 
 
 def _extract_docx_text(content: bytes) -> str:
-    """Extract text from a DOCX file using built-in zipfile + XML parsing.
-
-    DOCX is a ZIP archive; the main content lives in word/document.xml.
-    We parse the XML and extract text from <w:t> elements.
-    """
+    """Extract text from a DOCX file using python-docx."""
     import io
-    import xml.etree.ElementTree as ET
-    import zipfile
+
+    from docx import Document
 
     try:
-        with zipfile.ZipFile(io.BytesIO(content)) as zf:
-            # Read the main document content.
-            xml_bytes = zf.read("word/document.xml")
-            # DOCX is a controlled upload from an authenticated doctor,
-            # not arbitrary external XML. defusedxml is not available.
-            root = ET.fromstring(xml_bytes)  # noqa: S314
+        doc = Document(io.BytesIO(content))
+        paragraphs: list[str] = []
+        for para in doc.paragraphs:
+            if para.text.strip():
+                paragraphs.append(para.text)
+        # Also extract text from tables.
+        for table in doc.tables:
+            for row in table.rows:
+                row_texts: list[str] = []
+                for cell in row.cells:
+                    if cell.text.strip():
+                        row_texts.append(cell.text.strip())
+                if row_texts:
+                    paragraphs.append(" | ".join(row_texts))
+        return "\n".join(paragraphs).replace("\x00", "")
+    except Exception:
+        return ""
 
-        # Extract text from <w:t> elements, grouped by paragraph <w:p>.
-        w_ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
-        result: list[str] = []
-        for p in root.iter(f"{w_ns}p"):
-            para_texts: list[str] = []
-            for t in p.iter(f"{w_ns}t"):
-                if t.text:
-                    para_texts.append(t.text)
-            if para_texts:
-                result.append("".join(para_texts))
 
-        return "\n".join(result).replace("\x00", "")
-    except (zipfile.BadZipFile, KeyError, ET.ParseError):
+def _extract_pdf_text(content: bytes) -> str:
+    """Extract text from a PDF file using pypdf."""
+    import io
+
+    from pypdf import PdfReader
+
+    try:
+        reader = PdfReader(io.BytesIO(content))
+        pages: list[str] = []
+        for page in reader.pages:
+            text = page.extract_text()
+            if text:
+                pages.append(text)
+        return "\n".join(pages).replace("\x00", "")
+    except Exception:
         return ""
