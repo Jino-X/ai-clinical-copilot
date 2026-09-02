@@ -34,7 +34,7 @@ import {
   approveClinicalNoteApi,
   editClinicalNoteApi,
   generateSoapApi,
-  getClinicalNoteApi,
+  getNoteByConsultationApi,
   listNoteVersionsApi,
   rejectClinicalNoteApi,
   transcribeConsultationApi,
@@ -71,19 +71,13 @@ export function SoapNoteEditor({
   const [showVersions, setShowVersions] = useState(false);
 
   // Fetch the clinical note for this consultation.
-  // We try to fetch by consultation ID; if no note exists yet, that's fine.
+  // Uses the consultation-scoped endpoint, not the note-ID endpoint.
   const {
     data: note,
     isLoading: noteLoading,
   } = useQuery({
     queryKey: ["clinical-notes", "consultation", consultationId],
-    queryFn: async () => {
-      try {
-        return await getClinicalNoteApi(consultationId);
-      } catch {
-        return null;
-      }
-    },
+    queryFn: () => getNoteByConsultationApi(consultationId),
   });
 
   const { data: versions = [] } = useQuery({
@@ -190,11 +184,13 @@ export function SoapNoteEditor({
   // No note yet — show transcription and generation buttons.
   if (!note) {
     return (
-      <Card>
+      <Card className="animate-fade-in-up border-border/60">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <FileText className="size-4" aria-hidden />
-            AI Documentation
+          <CardTitle className="flex items-center gap-2.5 text-lg">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <FileText className="size-4" aria-hidden />
+            </div>
+            SOAP Note
           </CardTitle>
           <CardDescription>
             Transcribe the audio and generate a SOAP note draft. AI output is
@@ -207,6 +203,7 @@ export function SoapNoteEditor({
               variant="outline"
               onClick={() => transcribeMutation.mutate()}
               disabled={!canTranscribe || transcribeMutation.isPending}
+              className="gap-2"
             >
               {transcribeMutation.isPending ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -218,6 +215,7 @@ export function SoapNoteEditor({
             <Button
               onClick={() => generateSoapMutation.mutate()}
               disabled={!canGenerateSoap || generateSoapMutation.isPending}
+              className="gap-2"
             >
               {generateSoapMutation.isPending ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -242,13 +240,15 @@ export function SoapNoteEditor({
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="animate-fade-in-up">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <FileText className="size-4" aria-hidden />
-                Clinical Note
+            <div className="space-y-1">
+              <CardTitle className="flex items-center gap-2.5 text-lg">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <FileText className="size-4" aria-hidden />
+                </div>
+                SOAP Note
               </CardTitle>
               <CardDescription>
                 Version {note.current_version} ·{" "}
@@ -266,13 +266,11 @@ export function SoapNoteEditor({
         </CardHeader>
         <CardContent className="space-y-4">
           {note.status === "approved" && note.approved_at && (
-            <div className="rounded-md bg-muted p-3 text-sm">
-              <CheckCircle
-                className="mb-1 inline size-4 text-muted-foreground"
-                aria-hidden
-              />{" "}
-              Approved on{" "}
-              {new Date(note.approved_at).toLocaleString()}
+            <div className="flex items-center gap-2.5 rounded-lg bg-success/10 p-3.5 text-sm">
+              <CheckCircle className="size-4 shrink-0 text-success" aria-hidden />
+              <span className="text-success-foreground">
+                Approved on {new Date(note.approved_at).toLocaleString()}
+              </span>
             </div>
           )}
 
@@ -294,6 +292,7 @@ export function SoapNoteEditor({
                 size="sm"
                 onClick={() => approveMutation.mutate()}
                 disabled={approveMutation.isPending}
+                className="gap-1.5"
               >
                 <CheckCircle className="size-4" aria-hidden />
                 {approveMutation.isPending ? "Approving…" : "Approve note"}
@@ -305,15 +304,33 @@ export function SoapNoteEditor({
                 variant="outline"
                 onClick={() => rejectMutation.mutate()}
                 disabled={rejectMutation.isPending}
+                className="gap-1.5"
               >
                 <XCircle className="size-4" aria-hidden />
                 {rejectMutation.isPending ? "Rejecting…" : "Reject draft"}
+              </Button>
+            )}
+            {canEdit && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => generateSoapMutation.mutate()}
+                disabled={generateSoapMutation.isPending}
+                className="gap-1.5"
+              >
+                {generateSoapMutation.isPending ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <Sparkles className="size-4" aria-hidden />
+                )}
+                Regenerate
               </Button>
             )}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setShowVersions(!showVersions)}
+              className="gap-1.5"
             >
               <History className="size-4" aria-hidden />
               {showVersions ? "Hide" : "Show"} versions ({versions.length})
@@ -341,21 +358,30 @@ function SoapReadView({ note }: { note: ClinicalNoteResponse }) {
 
   return (
     <div className="space-y-3">
-      {SOAP_SECTIONS.map((section) => (
-        <div key={section.key}>
-          <div className="flex items-center gap-2">
-            <Label className="text-sm font-medium">{section.label}</Label>
-            {section.isDraft && (
-              <Badge variant="secondary" className="text-xs">
-                Draft
-              </Badge>
-            )}
+      {SOAP_SECTIONS.map((section) => {
+        const content = v[section.key];
+        const isEmpty = !content || content === "Not found in available patient records.";
+        return (
+          <div
+            key={section.key}
+            className="rounded-lg border bg-muted/20 p-3.5"
+          >
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-semibold">{section.label}</Label>
+              {section.isDraft && (
+                <Badge variant="secondary" className="text-xs">
+                  Draft
+                </Badge>
+              )}
+            </div>
+            <p
+              className={`mt-1.5 text-sm whitespace-pre-wrap ${isEmpty ? "italic text-muted-foreground/60" : "text-foreground"}`}
+            >
+              {content || "Not found in available patient records."}
+            </p>
           </div>
-          <p className="mt-1 text-sm whitespace-pre-wrap text-muted-foreground">
-            {v[section.key] || "Not found in available patient records."}
-          </p>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

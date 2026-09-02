@@ -678,7 +678,7 @@ export function ConsultationWorkflow({
 
             <div className="flex items-center gap-2 rounded-lg bg-success/10 p-3.5 text-sm">
               <CheckCircle2 className="size-4 text-success" aria-hidden />
-              <span className="text-success-foreground">
+              <span className="text-primary">
                 AI pipeline complete. Review and approve the SOAP note below.
               </span>
             </div>

@@ -394,7 +394,7 @@ export default function ConsultationDetailPage() {
                   className="size-4 shrink-0 text-success"
                   aria-hidden
                 />
-                <span className="text-success-foreground">
+                <span className="text-primary">
                   Audio attached ({formatBytes(consultation.audio_size_bytes)})
                 </span>
               </div>
