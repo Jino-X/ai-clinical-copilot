@@ -4,9 +4,6 @@
 
 An AI-powered clinical documentation assistant that reduces the time doctors spend on administrative tasks. The system captures patient consultations via audio recording, transcribes them, and generates structured SOAP notes while maintaining strict clinical safety standards.
 
-[![CI](https://github.com/your-org/clinical-copilot/workflows/CI/badge.svg)](https://github.com/your-org/clinical-copilot/actions)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
 ---
 
 ## 📋 Table of Contents
